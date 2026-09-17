@@ -1,0 +1,54 @@
+#pragma once
+
+#include "penalty_model.h"
+
+typedef enum {
+    PENALTY_TEXT_COVER_PROMPT,
+    PENALTY_TEXT_RETRY_PRESS_OK,
+    PENALTY_TEXT_HEADER_TITLE,
+    PENALTY_TEXT_TITLE_HEADING,
+    PENALTY_TEXT_MENU_PLAY,
+    PENALTY_TEXT_MENU_SETTINGS,
+    PENALTY_TEXT_MENU_HELP,
+    PENALTY_TEXT_MENU_FOOTER,
+    PENALTY_TEXT_HEADER_SETTINGS,
+    PENALTY_TEXT_SETTINGS_HEADING,
+    PENALTY_TEXT_SETTINGS_DIFFICULTY_FMT,
+    PENALTY_TEXT_SETTINGS_SOUND_FMT,
+    PENALTY_TEXT_SETTINGS_LANGUAGE_FMT,
+    PENALTY_TEXT_SETTINGS_BACK,
+    PENALTY_TEXT_SETTINGS_FOOTER,
+    PENALTY_TEXT_HEADER_HELP,
+    PENALTY_TEXT_HELP_HEADING,
+    PENALTY_TEXT_HELP_BODY,
+    PENALTY_TEXT_HELP_FOOTER,
+    PENALTY_TEXT_HOLD_COVER,
+    PENALTY_TEXT_SUMMARY_HEADER_FMT,
+    PENALTY_TEXT_SUMMARY_HEADING_FMT,
+    PENALTY_TEXT_SUMMARY_STATUS_FMT,
+    PENALTY_TEXT_SUMMARY_FLAWLESS,
+    PENALTY_TEXT_SUMMARY_WELL_PLAYED,
+    PENALTY_TEXT_SUMMARY_KEEP_PRACTISING,
+    PENALTY_TEXT_SUMMARY_RETRY,
+    PENALTY_TEXT_SUMMARY_TITLE,
+    PENALTY_TEXT_GAME_HEADER_FMT,
+    PENALTY_TEXT_AIM_FMT,
+    PENALTY_TEXT_INPUT_RESET,
+    PENALTY_TEXT_CHARGE_FMT,
+    PENALTY_TEXT_FLIGHT,
+    PENALTY_TEXT_RETURNING,
+    PENALTY_TEXT_SOUND_ON,
+    PENALTY_TEXT_SOUND_MUTED,
+    PENALTY_TEXT_SOUND_UNAVAILABLE,
+    PENALTY_TEXT_LANGUAGE_NAME,
+    PENALTY_TEXT_ERROR_UNAVAILABLE,
+    PENALTY_TEXT_COUNT
+} penalty_text_id_t;
+
+const char *penalty_text(penalty_language_t language, penalty_text_id_t id);
+const char *penalty_difficulty_text_localized(penalty_language_t language,
+                                               penalty_difficulty_t difficulty);
+const char *penalty_direction_text(penalty_language_t language,
+                                   penalty_direction_t direction);
+const char *penalty_outcome_text_localized(penalty_language_t language,
+                                            penalty_outcome_t outcome);
