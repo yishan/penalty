@@ -1,0 +1,207 @@
+{
+  "version": 2,
+  "status": "v1.1 horizontal-pitch and black-keeper style pass integrated; device acceptance pending",
+  "runtime": {
+    "converter": "tools/convert-penalty-gameplay.py",
+    "generated": ["gameplay_assets.c", "gameplay_assets.h"],
+    "formats": "RGB565 background; planar RGB565A8 sprites; native size; four-byte aligned const Flash data",
+    "pixelBytes": 264180,
+    "alphaConversion": "0..1 -> 0; 254..255 -> 255; retain other edge alpha",
+    "scene": "main/penalty_scene.c",
+    "supportFootWorld": [120, 177],
+    "contactPose": 2,
+    "contactToeInFrame": [71, 52],
+    "ballStart": [171, 147],
+    "keeperContacts": {"left": [8, 32], "right": [49, 27], "lowBetweenPalms": [28, 43]},
+    "targetX": [110, 160, 210],
+    "kickLeadMs": 100,
+    "totalPresentationMs": 600,
+    "fieldClip": [0, 18, 319, 182],
+    "powerMeterTop": 182
+  },
+  "generator": "built-in imagegen",
+  "reference": "../gameplay-concept-v1-source.png",
+  "visualChange": "Advertising boards stay dark green; active pitch bands now run horizontally and the keeper kit is black/dark charcoal; goalposts, net, field lines, gloves, skin and anchors are retained.",
+  "stylePass": {
+    "script": "tools/style-penalty-art.py",
+    "method": "deterministic palette and layout transformation; no new image-generation call",
+    "sourceBackups": "*-v1.0.png",
+    "grassDirection": "horizontal",
+    "keeperKit": "black/dark charcoal"
+  },
+  "background": {
+    "source": "background-source.png",
+    "export": "background-320x240.png",
+    "size": [
+      320,
+      240
+    ],
+    "formatPlanned": "RGB565",
+    "rawBytes": 153600
+  },
+  "striker": {
+    "source": "striker-sheet-source.png",
+    "sourceSize": [
+      2172,
+      724
+    ],
+    "grid": [
+      3,
+      1
+    ],
+    "exportSize": [
+      88,
+      88
+    ],
+    "alpha": true,
+    "anchorConvention": "Left support boot bottom center, measured from alpha > 128 in lowest four rows; provisional for animation.",
+    "frames": [
+      {
+        "file": "striker-0-88x88.png",
+        "pose": "ready",
+        "supportFoot": [
+          32,
+          82
+        ]
+      },
+      {
+        "file": "striker-1-88x88.png",
+        "pose": "backswing",
+        "supportFoot": [
+          34,
+          82
+        ]
+      },
+      {
+        "file": "striker-2-88x88.png",
+        "pose": "follow_through",
+        "supportFoot": [
+          28,
+          82
+        ]
+      }
+    ]
+  },
+  "keeper": {
+    "source": "keeper-sheet-source.png",
+    "sourceSize": [
+      1254,
+      1254
+    ],
+    "grid": [
+      2,
+      2
+    ],
+    "exportSize": [
+      56,
+      56
+    ],
+    "alpha": true,
+    "currentPalette": "black/dark charcoal kit with original cream gloves, skin and dark boots",
+    "frames": [
+      {
+        "file": "keeper-0-56x56.png",
+        "pose": "ready"
+      },
+      {
+        "file": "keeper-1-56x56.png",
+        "pose": "dive_screen_left",
+        "provisionalGloveContact": [
+          8,
+          32
+        ]
+      },
+      {
+        "file": "keeper-2-56x56.png",
+        "pose": "dive_screen_right",
+        "provisionalGloveContact": [
+          49,
+          32
+        ]
+      },
+      {
+        "file": "keeper-3-56x56.png",
+        "pose": "low_collect",
+        "provisionalGloveContact": [
+          28,
+          43
+        ]
+      }
+    ]
+  },
+  "ball": {
+    "source": "ball-source.png",
+    "exports": [
+      {
+        "file": "ball-18.png",
+        "size": [
+          18,
+          18
+        ]
+      },
+      {
+        "file": "ball-16.png",
+        "size": [
+          16,
+          16
+        ]
+      },
+      {
+        "file": "ball-14.png",
+        "size": [
+          14,
+          14
+        ]
+      },
+      {
+        "file": "ball-12.png",
+        "size": [
+          12,
+          12
+        ]
+      },
+      {
+        "file": "ball-10.png",
+        "size": [
+          10,
+          10
+        ]
+      },
+      {
+        "file": "ball-8.png",
+        "size": [
+          8,
+          8
+        ]
+      }
+    ],
+    "alpha": true,
+    "anchor": "center",
+    "movement": "elapsed-time position and arc, pre-sized image selection; no full-screen frame sequence"
+  },
+  "dynamicUI": [
+    "score",
+    "shot markers",
+    "target brackets",
+    "power meter",
+    "result messages",
+    "shadows"
+  ],
+  "checks": {
+    "pngDimensions": "checked",
+    "spriteAlpha": "checked genuine alpha, no opaque rectangle",
+    "smallSizeInspection": "background, striker and keeper samples inspected",
+    "animationAlignment": "host scene and actual LVGL frames checked, including glove and boot pixels",
+    "device": "not run"
+  },
+  "pending": [
+    "Physical acceptance: native-size readability, input timing, frame cadence, sound and endurance.",
+    "See penalty/docs/validation.md for the exact firmware build and test record."
+  ],
+  "prompts": {
+    "background": "Use case: precise-object-edit. Image 1 is the approved gameplay layout EDIT TARGET. Make its clean static background layer for a 320x240 landscape pixel-art game (same 4:3 aspect ratio). Preserve camera, goal position and scale, sky, lights, spectator band, perspective grass and field lines. Remove BOTH players and ALL balls completely; reconstruct grass and net behind them. Remove ALL HUD lettering, the entire power meter, all five result squares and all three target brackets/triangle; replace their top and bottom HUD areas with flat dark green #0B211F. Keep the scene between exactly the same panel boundaries. Change ALL advertising panels below the crowd, including white blocks, white football emblems, red and blue panels, into a continuous plain deep forest-green strip #123C2F. Keep the white goalposts, a simplified sparse net, thin necessary pitch lines and the original sky. No new objects, no people, no ball, no targets, no words, no decorative symbols. Simplify tiny crowd detail for native 320x240 readability; keep crisp chunky pixels, the existing bright retro palette and stable geometry. Do NOT rotate or crop. This is the background layer only, not a gameplay screenshot.",
+    "striker": "Use case: stylized-concept. Asset: transparent PNG pixel-art sprite sheet, one row of exactly THREE equally sized square cells, no labels, no visible grid, no background. Image 1 is a STYLE AND CHARACTER REFERENCE ONLY. Extract and faithfully recreate the anonymous red-shirt red-shorts black-haired striker seen FROM BEHIND in the foreground of the reference. Make THREE consistent animation poses of this SAME player, left to right: (1) idle ready stance facing away/up toward goal, both feet grounded; (2) backswing, LEFT supporting foot planted, RIGHT boot drawn backward toward camera ready to kick, arms balanced; (3) right-foot follow-through after kicking toward the upper right, LEFT supporting foot still planted. Same head, skin tone, red shirt, red shorts, red socks, black boots, chunky dark pixel outlines, no numbers or logos. Full body visible in each cell, identical anatomical scale across all three poses. Bottom-center root anchor and consistent ground baseline. All poses must fit within their own cell with transparent padding and no touching. Keep native-style coarse pixel art appropriate for sprites roughly 40x64 logical pixels; avoid fine details. Output 3:1 wide, e.g.1536x512. Genuine alpha transparency everywhere outside the silhouettes, NOT a painted checkerboard, no opaque white background. No soccer ball, no shadows, no grass, no goal, no HUD, no text. This is game source artwork, not a screenshot.",
+    "keeper": "Use case: stylized-concept. Asset: genuine transparent PNG sprite sheet, exactly FOUR equally sized square cells in a 2x2 grid, with NO visible grid lines or labels. Image 1 is ONLY style and character reference. Recreate the anonymous black-haired blue-shirt blue-shorts goalkeeper from the reference, facing the camera. Same cream gloves, dark blue socks, black boots, tan skin, chunky dark outlines and crisp retro pixel art in all frames, same anatomical scale. Top-left: ready stance, slightly crouching with hands out. Top-right: diving horizontally toward SCREEN LEFT, both hands extended left, face forward, legs trailing right. Bottom-left: diving horizontally toward SCREEN RIGHT, both hands extended right, legs trailing left. Bottom-right: low centered crouch with both gloved hands together near the ground to collect a low ball, but do NOT draw a ball. Full body contained within each cell, generous transparent padding, no overlaps. Diving poses naturally wider and shorter than standing but same body scale; do not stretch bodies to fill cells. Suitable for a roughly 28x36 logical pixel standing sprite and roughly 52x28 diving sprite. TRUE transparent alpha outside characters; no painted checkerboard, no black/white background, no shadows, no pitch, no goal, no ball, no text, no logo. Output square, e.g.1024x1024. Production character artwork, not a screenshot.",
+    "ball": "Use case: background-extraction. Image 1 is the reference and extraction target: its SINGLE foreground black-and-cream soccer ball, not the advertising icons. Recreate that ball alone as a clean coarse pixel-art game sprite, centered in a square transparent PNG. Same cream white panels, dark navy black patches and chunky stepped circular outline. Keep the sphere front view simple so it is legible at 16x16 pixels. Ball fills about 80 percent of the square with generous transparent margin. Only the ball: no shadow, ground, player, field, text, border, motion lines, diagram or logo. GENUINE alpha transparency outside the ball, not painted checkerboard. Crisp hard pixel edges and flat colors, no fine texture, glow, fuzzy antialiasing or photorealism. It will be displayed at several small sizes by the game. Source artwork, not a screenshot."
+  }
+}
