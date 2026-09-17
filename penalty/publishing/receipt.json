@@ -1,0 +1,16 @@
+{
+  "ok": true,
+  "projectId": 402,
+  "revisionId": 735,
+  "slug": "penalty",
+  "status": "pending",
+  "projectStatus": "pending",
+  "stateVersion": 1,
+  "localVersion": "v0.3",
+  "createdAt": "2026-09-15T04:49:10+00:00",
+  "reviewedAt": null,
+  "firmwareFilename": "Penalty-community-v0.3-full.bin",
+  "firmwareSize": 919968,
+  "firmwareSha256": "26ca8313be811a0167fbec29b3881e94dfce50b27f03a749d63d017f9a7eaf60",
+  "verification": "Confirmed with projects after submit --auto; one project returned and submissionResult matched the upload receipt."
+}

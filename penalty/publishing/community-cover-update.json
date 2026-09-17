@@ -1,0 +1,16 @@
+{
+  "preparedAt": "2026-09-16",
+  "projectId": 402,
+  "slug": "penalty",
+  "purpose": "Prepared community-cover replacement; not uploaded",
+  "cover": "assets/images/penalty/community-cover-v0.4-no-label.png",
+  "coverSha256": "ebaa3a054b495e394e6dd5f9d0d49de552d6fb892d3f12431f849c0383ed92bf",
+  "width": 1086,
+  "height": 1448,
+  "aspectRatio": "3:4",
+  "generationMode": "built-in imagegen precise-object-edit",
+  "editTarget": "assets/images/penalty/community-cover-v0.3.png",
+  "prompt": "Use case: precise-object-edit. Asset type: community listing cover for the Penalty pixel-art game, exact portrait 3:4 aspect ratio. Image 1 is the edit target. Primary request: remove only the small bottom-center text ‘AI ILLUSTRATION’ and reconstruct the green pixel-art pitch underneath so it is seamless. Constraints: preserve the entire existing image exactly in composition and style—large exact PENALTY title, blue sky, stadium lights and flags, crowd, advertising boards, white goal and net, blue goalkeeper, full-body anonymous red-uniform striker seen from behind, soccer ball, pitch perspective, white field lines, crisp chunky pixels, colors, proportions, spacing, and all edges. The final image must contain only the exact text ‘PENALTY’. No new text, disclosure, watermark, logo, HUD, score, hardware, rotation instruction, additional character, or object. Do not crop, rotate, recolor, restyle, soften, or redesign anything. Fill the former text area only with the matching alternating green pitch stripe and pixel texture.",
+  "uploadStatus": "not_uploaded",
+  "note": "AI-generated cover art, not a device screenshot. The listing metadata can retain the illustration disclosure without rendering it into the poster."
+}

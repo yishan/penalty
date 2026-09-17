@@ -1,0 +1,16 @@
+{
+  "category": "games",
+  "titleZh": "Penalty 五球点球挑战",
+  "titleEn": "Penalty: Five-Shot Challenge",
+  "descriptionZh": "把短暂休息变成一场五球点球挑战。按开机封面的提示横握，按确定进入菜单并选择 PLAY；用上下键选择射门落点（横握后上键向右、下键向左），按一次确定开始蓄力，再按一次确定出脚。把力度停在 60–80 的最佳区，就能踢出完美射门；力度不足会被扑出，用力过猛则会踢高。五球结束查看进球数与完美射门次数，再来一局挑战 5/5！支持声音开关和玩法帮助，长按确定返回封面。本版为单人离线挑战，成绩不保存；实机验收尚未完成。社区封面为 AI 生成的玩法示意图，非实机截图。",
+  "descriptionEn": "Turn a short break into a five-shot penalty challenge. Follow the opening cover to hold the game sideways, press OK, and choose PLAY. Pick your target with the direction buttons (UP moves right and DOWN moves left in landscape), then press OK to start charging and again to shoot. Stop in the 60–80 sweet spot for a perfect goal; too little power gets saved, while too much sends the ball over the bar. After five kicks, check your goals and perfect shots, then try again for 5/5! Toggle sound, open Help, or hold OK to return to the cover. This is a single-player offline challenge with no saved scores. On-device acceptance testing is still pending. The community cover is an AI-generated gameplay illustration, not a device screenshot.",
+  "localVersion": "v0.3",
+  "firmware": "build/Penalty-community-v0.3-full.bin",
+  "firmwareSha256": "26ca8313be811a0167fbec29b3881e94dfce50b27f03a749d63d017f9a7eaf60",
+  "cover": "assets/images/penalty/community-cover-v0.3.png",
+  "coverSha256": "7506f5eda38de240002b24cfa1acea3ef8903db2bbdcc42028e8f319c2be5063",
+  "sourceUrl": "",
+  "images": [],
+  "coverGenerationMode": "built-in imagegen",
+  "coverPrompt": "Use case: precise-object-edit. Asset: community listing cover for Penalty, exact portrait 3:4 aspect ratio, ideally 1152x1536 pixels. Image 1 is the edit target and style reference. Generate a polished new variant based on this existing pixel-art cover. Keep the large cream block-letter PENALTY title at the top, blue stadium sky and lights, full-body red-uniform anonymous striker viewed from behind, ball, green perspective pitch, and blue goalkeeper in the white net. Preserve the recognizable composition, vivid palette and crisp retro pixel art. Remove the entire bottom instruction panel: no device silhouettes, no curved arrow, no rotation diagram, no TURN RIGHT 90°, no THEN PRESS OK. Instead extend the pixel pitch naturally into the freed lower area, with balanced spacing for the player's full body and ball. Only two texts: large exact 'PENALTY' title, and small legible 'AI ILLUSTRATION' centered close to the bottom as disclosure. No HUD, scores, fake screenshot frame, branding, additional players, buttons or hardware. This is clearly illustrative cover art, not a real device screenshot."
+}
