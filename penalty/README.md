@@ -6,7 +6,7 @@
 
 A three-button, offline landscape penalty-kick game for AI Passport. The image rotates 90° counterclockwise; hold the device 90° clockwise so UP means right and DOWN means left. OK remains confirm.
 
-Status: v1.1 visual refresh implemented and built, 2026-09-17. The portrait cover now adds the fixed Chinese game mark beneath `PENALTY`; active pitch art uses horizontal grass bands; and the keeper wears black. The landscape title screen no longer displays the former English/Chinese slogan. The v1.0 six-target rules, calibrated 90% / 65% / 25% goal rates, bilingual UI, and persistent language choice are unchanged. See the [installation, validation, and device checklist](docs/validation.md) for exact evidence; device acceptance remains pending.
+Status: v1.1 visual refresh implemented and built, 2026-09-17. The portrait cover now adds the fixed Chinese game mark beneath `PENALTY`; active pitch art uses horizontal grass bands; and the keeper wears black. The landscape title screen no longer displays the former English/Chinese slogan. The v1.0 six-target rules, calibrated 90% / 65% / 25% goal rates, bilingual UI, and persistent language choice are unchanged. See the [installation, validation, and device checklist](docs/validation.md) for exact evidence; the v1.1 image has been verified on a real device.
 
 ## Start here
 

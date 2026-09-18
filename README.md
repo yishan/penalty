@@ -94,7 +94,7 @@ There is also a desktop harness that renders the real UI through LVGL 9.5.0, use
 
 `MANIFEST.md` lists exactly which baseline files this layer replaces.
 
-The game builds and its host tests pass. It has not been run on a board yet, so the rotation direction, the cover mark's legibility on the physical panel, and how the 80 ms window actually feels are all still open.
+The game builds, its host tests pass, and the v1.1 image has been flashed and played on a real device.
 
 ## Layout
 

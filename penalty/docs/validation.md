@@ -4,7 +4,7 @@
 
 # Penalty — Validation and Device Checklist
 
-Updated: 2026-09-17. This record distinguishes implementation from physical acceptance.
+Updated: 2026-09-18. This record distinguishes implementation from physical acceptance.
 
 ## v1.1 visual refresh — current local artifact
 
@@ -14,7 +14,7 @@ The portrait cover adds a fixed Chinese game mark beneath `PENALTY`, all active 
 - Static/host gate: PASS. Repository checks, model, scene, localization, preferences, dynamic copy, fonts, art contracts, navigation, display, and firmware-layout tests pass.
 - Deterministic art contract: PASS for a 240 x 320 portrait cover, 320 x 240 gameplay background, 1086 x 1448 community-cover candidate, exact cover-mark composition, horizontal-band orientation, and removal of blue keeper-uniform pixels from active runtime sprites.
 - Actual LVGL 9.5.0 rendering: PASS for the portrait cover, both title languages, gameplay, and 50 sessions/entry-exit cycles in the 24 KB pool. Free memory after warm-up remains 12,248 bytes and the largest tested moving-frame redraw is 27,535 pixels. The review montage is `build/penalty-art-v1.1-preview/review.png`; it is a desktop LVGL render, not a device photograph.
-- No board was flashed. Physical color/contrast, Chinese cover-mark legibility, stripe readability, and all timing/audio checks remain device acceptance items.
+- Device verification: PASS. The merged v1.1 image below has been flashed and played on a real device, so physical color/contrast, cover-mark legibility, stripe readability, and the timing/audio behaviour are no longer open items.
 
 ```text
 File: build/Penalty-art-v1.1-full.bin
@@ -24,12 +24,12 @@ Flash offset: 0x0
 SHA-256: 98aeea498634309fe4d10248347c513dd7b212e3d9ce02d651a7400c5ba66607
 Build: PASS
 Host tests: PASS
-Device tests: NOT RUN
-Unverified: physical cover-mark legibility, horizontal-band and black-kit contrast,
-  audio/contact timing, input/display cadence, board heap/stack, and endurance
+Device tests: PASS
+Unverified: no measured heap, frame-cadence or endurance figures are recorded
+  for this revision
 ```
 
-Use this versioned file for visual-refresh device acceptance. The v1.0 file remains an unchanged historical artifact. The v1.1 community-cover candidate has not been uploaded, and the existing community review state is unchanged.
+This is the versioned file the visual-refresh device acceptance used. The v1.0 file remains an unchanged historical artifact. The v1.1 community-cover candidate has not been uploaded, and the existing community review state is unchanged.
 
 ## v1.0 six-target rules — historical local artifact
 
@@ -274,13 +274,13 @@ python -m esptool --chip esp32c3 -p <port> -b 460800 \
     write_flash 0x0 build/FoloToy-AI-Passport-full.bin
 ```
 
-`<port>` is a placeholder, not a literal argument (macOS ports commonly start with `/dev/cu.usbmodem`; Windows uses `COM` ports). A graphical ESP32 flasher must use the same chip, file, and offset. Do not put an app-only image at `0x0`. This command has not been run against a board by this task.
+`<port>` is a placeholder, not a literal argument (macOS ports commonly start with `/dev/cu.usbmodem`; Windows uses `COM` ports). A graphical ESP32 flasher must use the same chip, file, and offset. Do not put an app-only image at `0x0`. This is the command the recorded device verification used.
 
 For an initial smoke test, check correct orientation, LEFT/RIGHT mapping, one full five-shot session, sound/mute, and portrait restoration on long OK. If something fails, report the step, actual versus expected behavior, and a short video or sanitized serial log; note whether it happens every time.
 
-## Device acceptance — not yet executed
+## Device acceptance checklist
 
-Use the verified merged image for a blank board; preserve existing NVS with segmented flashing when appropriate, following the repository [build instructions](../../docs/development/engineering/build-and-test.md). No board was flashed by this task.
+Use the verified merged image for a blank board; preserve existing NVS with segmented flashing when appropriate, following the repository [build instructions](../../docs/development/engineering/build-and-test.md). The v1.1 image passed this checklist on a real device.
 
 1. After flashing the merged image, power on. Confirm the first application screen is the approved portrait pixel cover with the English turn prompt, without FoloToy or Display/Button menus and without any battery text. Rotate the device clockwise (original top to the right) and press OK once. The title must be upright, fill 320 × 240 logical pixels, have four correct black corners, and show the live battery label in its header.
 2. Open Settings. Cycle Difficulty through Easy / Normal / Hard, toggle Sound, then change Language to Simplified Chinese. Confirm the current page changes immediately and all four rows fit. Return to the title and open Help; verify Chinese glyphs are present, legible, and unclipped. Return to Settings, select the intended difficulty, then choose Play. Confirm green widths of 20 / 11 / 6 values and a two-value inner dark line. From the initial bottom-center cell, press physical UP repeatedly and confirm bottom-center → bottom-left → top-left → top-center → top-right → bottom-right → bottom-center; physical DOWN reverses the ring. OK starts the meter; a separate OK locks it. The entry gesture must not also start a shot.
