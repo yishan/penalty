@@ -8,6 +8,7 @@
 #include "demo_navigation.h"
 #include "penalty_app.h"
 #include "penalty_preferences.h"
+#include "launcher_contract.h"
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
@@ -28,6 +29,8 @@ static atomic_bool s_input_ready, s_input_lost;
 static atomic_uint s_input_epoch;
 /* Only the serialized button callback accesses these originating epochs. */
 static unsigned s_press_epoch[BSP_BTN_COUNT];
+static bool s_on_cover = true;
+static uint64_t s_cover_ok_pressed_at;
 
 static void return_to_cover(void) {
     esp_err_t err = penalty_app_stop();
@@ -43,6 +46,7 @@ static void return_to_cover(void) {
     bsp_lvgl_unlock();
     err = penalty_app_start();
     if (err != ESP_OK) ESP_LOGE(TAG, "Cover restart: %s", esp_err_to_name(err));
+    else s_on_cover = true;
 }
 
 static void input_task(void *arg) {
@@ -51,10 +55,30 @@ static void input_task(void *arg) {
     for (;;) {
         if (xQueueReceive(s_input_queue, &input, portMAX_DELAY) != pdTRUE) continue;
         if (input.epoch != atomic_load(&s_input_epoch)) continue;
-        if (input.btn == BSP_BTN_OK && input.event == BSP_BTN_LONG) {
+        if (s_on_cover && input.btn == BSP_BTN_OK) {
+            if (input.event == BSP_BTN_PRESS) {
+                s_cover_ok_pressed_at = input.at_ms;
+                continue;
+            }
+            if (input.event == BSP_BTN_LONG) {
+                esp_err_t err = launcher_contract_return_to_factory();
+                if (err != ESP_ERR_INVALID_STATE) {
+                    ESP_LOGE(TAG, "Return to Play Library failed: %s",
+                             esp_err_to_name(err));
+                }
+                continue;
+            }
+            if (input.event == BSP_BTN_CLICK) {
+                input.event = BSP_BTN_PRESS;
+                input.at_ms = s_cover_ok_pressed_at;
+                s_on_cover = false;
+            }
+        } else if (input.btn == BSP_BTN_OK && input.event == BSP_BTN_LONG) {
             return_to_cover();
-        } else if (penalty_app_key(input.btn, input.event, input.at_ms,
-                                  atomic_exchange(&s_input_lost, false))) {
+            continue;
+        }
+        if (penalty_app_key(input.btn, input.event, input.at_ms,
+                            atomic_exchange(&s_input_lost, false))) {
             return_to_cover();
         }
     }
@@ -112,4 +136,9 @@ void app_main(void) {
         return;
     }
     atomic_store(&s_input_ready, true);
+    err = launcher_contract_mark_valid();
+    if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) {
+        ESP_LOGW(TAG, "Launcher trial confirmation failed: %s",
+                 esp_err_to_name(err));
+    }
 }

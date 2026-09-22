@@ -19,6 +19,25 @@ class PenaltyShellContract(unittest.TestCase):
         self.assertNotIn('DEMOS[]', source)
         self.assertNotIn('ui_pixel_screen_create("FoloToy")', source)
 
+    def test_cover_defers_ok_press_and_long_returns_to_launcher(self):
+        source = (ROOT / 'main/main.c').read_text()
+        body = function_body(source, 'input_task')
+        self.assertIn('s_on_cover && input.btn == BSP_BTN_OK', body)
+        self.assertIn('s_cover_ok_pressed_at = input.at_ms', body)
+        self.assertIn('launcher_contract_return_to_factory()', body)
+        self.assertIn('input.event = BSP_BTN_PRESS', body)
+        self.assertLess(body.index('input.event == BSP_BTN_LONG'),
+                        body.index('input.event = BSP_BTN_PRESS'))
+
+    def test_trial_is_confirmed_only_after_input_is_ready(self):
+        source = (ROOT / 'main/main.c').read_text()
+        body = function_body(source, 'app_main')
+        ready = 'atomic_store(&s_input_ready, true)'
+        confirm = 'launcher_contract_mark_valid()'
+        self.assertIn(ready, body)
+        self.assertIn(confirm, body)
+        self.assertLess(body.index(ready), body.index(confirm))
+
     def test_return_stops_producers_before_recreating_cover(self):
         source = (ROOT / 'main/main.c').read_text()
         body = function_body(source, 'return_to_cover')

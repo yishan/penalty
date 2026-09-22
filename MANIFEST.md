@@ -4,7 +4,7 @@ Exactly which files this application layer touches in the FoloToy AI Passport ba
 
 - **Base commit**: `ccd3576` (2026-09-14) — `fix(battery): restore previous CW2017 profile`
   Full hash: `ccd3576e304f7e17d9a0d4c12a2d05db379b14c0`
-- **Added**: 107 files — new paths, no conflict risk when you update upstream.
+- **Added**: 110 files — new paths, no conflict risk when you update upstream.
 - **Modified**: 20 files — baseline files this application rewrites. These are overwritten by `apply.sh`.
 
 The base commit is the tree these files were cut against. `apply.sh` copies by path and does not check the target's commit, so on a newer upstream these modified files will silently replace whatever upstream put there; review them before applying on a moving baseline.
@@ -39,6 +39,9 @@ tools/validate.sh
 ## Added files
 
 ```text
+components/launcher_contract/CMakeLists.txt
+components/launcher_contract/include/launcher_contract.h
+components/launcher_contract/launcher_contract.c
 assets/fonts/penalty/LICENSE-SourceHanSansSC.txt
 assets/fonts/penalty/penalty_font_zh_14.c
 assets/fonts/penalty/penalty_font_zh_20.c

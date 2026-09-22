@@ -15,5 +15,5 @@ idf_component_register(
          "../assets/music/penalty/penalty_sfx_pcm.c"
          "penalty_app.c"
     INCLUDE_DIRS "." "../assets/fonts/penalty"
-    REQUIRES bsp esp_hw_support esp_timer nvs_flash
+    REQUIRES bsp esp_hw_support esp_timer launcher_contract nvs_flash
 )
