@@ -76,6 +76,13 @@ class PenaltyShellContract(unittest.TestCase):
         self.assertIn('before.language != s_model.language', key)
         self.assertIn('atomic_store(&s_language_save_pending, true)', key)
 
+    def test_portrait_controls_do_not_enter_landscape(self):
+        source = (ROOT / 'main/penalty_app.c').read_text()
+        key = function_body(source, 'penalty_app_key')
+        self.assertIn('btn == BSP_BTN_UP ? PENALTY_INPUT_UP', key)
+        self.assertIn('btn == BSP_BTN_DOWN ? PENALTY_INPUT_DOWN', key)
+        self.assertNotIn('bsp_lvgl_set_landscape(true)', key)
+
     def test_low_memory_error_is_localized(self):
         source = (ROOT / 'main/penalty_app.c').read_text()
         enter = function_body(source, 'penalty_app_enter')

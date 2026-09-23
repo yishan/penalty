@@ -32,7 +32,7 @@ static atomic_bool s_language_save_pending;
 static atomic_int s_language_to_save;
 static atomic_int s_battery;
 static bool s_ready, s_input_reset, s_dimmed;
-static penalty_language_t s_initial_language = PENALTY_LANGUAGE_EN;
+static penalty_language_t s_initial_language = PENALTY_DEFAULT_LANGUAGE;
 static penalty_audio_tracker_t s_audio_tracker;
 static uint64_t s_last_action;
 static uint32_t s_max_update_us, s_max_input_age_ms;
@@ -206,7 +206,7 @@ static void tick(lv_timer_t *timer) {
 
 void penalty_app_set_initial_language(penalty_language_t language) {
     s_initial_language = (unsigned)language < PENALTY_LANGUAGE_COUNT
-        ? language : PENALTY_LANGUAGE_EN;
+        ? language : PENALTY_DEFAULT_LANGUAGE;
 }
 
 void penalty_app_enter(void) {
@@ -319,8 +319,8 @@ bool penalty_app_key(bsp_btn_t btn, bsp_btn_ev_t event, uint64_t at, bool lost) 
             // Wake-up is not also a shot.
         } else {
             penalty_model_t before = s_model;
-            penalty_input_t input = btn == BSP_BTN_UP ? PENALTY_INPUT_RIGHT :
-                btn == BSP_BTN_DOWN ? PENALTY_INPUT_LEFT : PENALTY_INPUT_OK;
+            penalty_input_t input = btn == BSP_BTN_UP ? PENALTY_INPUT_UP :
+                btn == BSP_BTN_DOWN ? PENALTY_INPUT_DOWN : PENALTY_INPUT_OK;
             penalty_model_input(&s_model, input, at);
             if (before.language != s_model.language) {
                 s_initial_language = s_model.language;
@@ -328,13 +328,6 @@ bool penalty_app_key(bsp_btn_t btn, bsp_btn_ev_t event, uint64_t at, bool lost) 
                 atomic_store(&s_language_save_pending, true);
             }
             s_input_reset = false;
-            if (before.state == PENALTY_ORIENT && s_model.state == PENALTY_TITLE &&
-                bsp_lvgl_set_landscape(true) != ESP_OK) {
-                s_model.state = PENALTY_ORIENT;
-                s_model.since_ms = now;
-                s_input_reset = true;
-                ESP_LOGE(TAG, "Rotation failed; retry or hold OK to return");
-            }
             update(now, &before);
         }
     }

@@ -4,112 +4,84 @@
 
 # Penalty
 
-A three-button, offline penalty-kick game for the [FoloToy AI Passport](https://github.com/folotoy/ai-passport) wearable. Five kicks per session, six goal cells, and a timing meter that decides how good your shot is.
+Penalty is an offline, portrait penalty-kick game for the [FoloToy AI Passport](https://github.com/folotoy/ai-passport). Keep the device upright and use its three buttons to play either side of a five-attempt shootout:
 
-Turn the device clockwise, press OK, and the portrait cover gives way to the game.
+- **Shoot Challenge** — choose one of six goal cells, stop the timing meter, and beat the black-clad keeper.
+- **Keeper Challenge** — read the blue striker's body and foot pose, choose the black keeper's dive, and time the save.
+
+The game includes Easy, Normal, and Hard difficulties, English and Simplified Chinese, persistent language selection, short sound cues, pixel artwork, and a five-attempt summary.
+
+## Download
+
+Installable firmware is published on the [Releases page](https://github.com/yishan/penalty/releases). Download the file ending in `-full.bin`; GitHub's automatically generated source archives are not flashable firmware.
+
+| Version | Status | Firmware SHA-256 |
+| --- | --- | --- |
+| [v1.4.2](https://github.com/yishan/penalty/releases/tag/v1.4.2) | Latest; build and host tests passed, device acceptance pending | `c7f93051605164d6e26c479a63164bdb04e1c26d215bd9ea9e1637a494df4037` |
+| [v1.1.0](https://github.com/yishan/penalty/releases/tag/v1.1.0) | Historical device-verified visual refresh | `98aeea498634309fe4d10248347c513dd7b212e3d9ce02d651a7400c5ba66607` |
+
+Each release also includes `SHA256SUMS.txt`. Verify the download before flashing:
+
+```bash
+shasum -a 256 FoloToy-AI-Passport-Penalty-v1.4.2-full.bin
+```
+
+Flash the merged image at offset `0x0`. It contains the bootloader, partition table, and application; writing it may reset stored settings such as the saved language.
 
 ## How to play
 
-Power on to the portrait cover, turn the device clockwise so its top points right, and press OK.
+Press OK on the portrait cover. UP and DOWN select Shoot, Keep, Settings, or Help; OK confirms.
 
-The title screen offers Play, Settings and Help; UP/DOWN moves and OK selects.
+Both play modes use the same six-cell order. Every attempt starts at top-center. DOWN cycles:
 
-Every kick takes two presses:
+```text
+top-center → bottom-center → top-left → bottom-left
+           → top-right → bottom-right → top-center
+```
 
-1. **Aim.** UP advances clockwise around the six goal cells, DOWN reverses. The ring runs top-left → top-center → top-right → bottom-right → bottom-center → bottom-left and wraps at both ends. Press OK to lock the target and start the power meter.
-2. **Shoot.** The meter sweeps 0 → 100 → 0. Press OK again to stop it and strike the ball.
+UP follows the reverse order. This keeps vertical movement aligned with the physical buttons while changing columns only after visiting both cells.
 
-The meter runs at 8 ms per value but slows to 40 ms inside the green band, so the good window stays readable instead of blurring past.
+### Shoot Challenge
 
-Long OK leaves the game from any screen and returns to the cover.
+1. Select a target and press OK.
+2. Press OK again to stop the timing meter and shoot.
 
-## Rules
+The two-value dark line has a 90% average goal rate, the rest of the green band 65%, and normal power outside green 25%. Very weak and excessive power fail. Easy, Normal, and Hard narrow the green band from 20 to 11 to 6 values.
 
-Difficulty changes only how wide the green band is. The meter timing and the probabilities stay the same.
+### Keeper Challenge
 
-| Difficulty | Green width | Full meter cycle | Perfect window per crossing |
-| --- | --- | --- | --- |
-| EASY (default) | 20 values | 2,880 ms | 80 ms |
-| NORMAL | 11 values | 2,304 ms | 80 ms |
-| HARD | 6 values | 1,984 ms | 80 ms |
+1. Watch the blue striker's truthful opening pose. The cue remains visible for 900 / 600 / 350 ms on Easy / Normal / Hard.
+2. Choose the black keeper's dive and press OK.
+3. Press OK again to stop the timing meter and dive.
 
-Where the second press lands decides everything:
+Reading the exact cell gives 90% / 65% / 25% save rates on the dark line / green band / outside green. Choosing the other row in the same column gives 35% / 20% / 5%; another column cannot save the shot.
 
-| Power | Result |
-| --- | --- |
-| 0–29 | SAVE — too weak, the keeper collects it |
-| 91–100 | MISS — over the bar |
-| The two-value dark line inside the green band | Precision shot, 90% average goal rate |
-| The rest of the green band | 65% average goal rate |
-| 30–90 outside the green band | 25% average goal rate |
+Five attempts lead to a goals or saves summary. Long-press OK to leave a session and return to the cover.
 
-The goal is six cells in two rows, and the keeper independently predicts one of them. The relation between the keeper's cell and yours is calibrated so that a uniform prediction produces those averages for every target you might pick. They are long-run probabilities, not per-session quotas: a run of five can go anywhere.
+## Source package
 
-The green band, the keeper's hidden choice and the outcome roll are all drawn once when a kick starts and are never rerolled — a dropped input resyncs to the same kick rather than changing your fate. The animation shows the result that was already decided the moment you pressed.
+This repository is an application-layer export, not a standalone ESP-IDF project. It is generated from authoritative Penalty source commit `d5f08e7a1d345f9d9cac5552167eaf4166c8f5d0` against AI Passport base `ccd3576e304f7e17d9a0d4c12a2d05db379b14c0`.
 
-Five kicks lead to a summary with your goals, each outcome and your precision hits, then Retry or Title.
-
-## Settings
-
-| | |
-| --- | --- |
-| Difficulty | Cycles EASY → NORMAL → HARD |
-| Sound | Mutes and unmutes, with a cue at each end |
-| Language | Switches English / 简体中文 immediately |
-| Back | Returns to the title screen |
-
-Language is the only setting that survives a restart. Scores, difficulty and sound are session-scoped by design, and retry keeps your difficulty.
-
-Help explains the controls in-game.
-
-## Sound
-
-Short ES8311 cues for the kick, the glove and the goal, capped well under a second, at 16 kHz mono. The audio thread is a bounded worker: if it falls behind, obsolete cues are dropped rather than queued up, and if audio fails to start at all the game stays fully playable in silence.
-
-## Building
-
-This is an application layer rather than a standalone project — `main` needs the `bsp` component, and the build needs the baseline's CMake project, partition table and dependency lock. Lay these files over a checkout of the baseline first:
+Apply it to that exact baseline:
 
 ```bash
 git clone https://github.com/folotoy/ai-passport.git
 cd ai-passport
-/path/to/this/repository/apply.sh .
+git checkout ccd3576e304f7e17d9a0d4c12a2d05db379b14c0
+/path/to/penalty/apply.sh --dry-run .
+/path/to/penalty/apply.sh .
 ```
 
-Then build. ESP-IDF 5.5.3, ESP32-C3 with 8 MB Flash:
+Then build with ESP-IDF 5.5.3:
 
 ```bash
-source /path/to/esp-idf-5.5.3/export.sh
-./tools/validate.sh --static     # repository checks and host tests
-./tools/validate.sh --firmware   # ESP-IDF build and merged-image verification
+source /path/to/esp-idf-v5.5.3/export.sh
+./tools/validate.sh --static
+./tools/validate.sh --firmware
 ```
 
-The firmware stage produces `build/FoloToy-AI-Passport-full.bin`, which is flashed at offset `0x0`. The browser flasher at <https://ai-passport.folotoy.cn/tools/web-flasher/> will do that without uploading anything.
-
-There is also a desktop harness that renders the real UI through LVGL 9.5.0, useful for checking layout without hardware:
-
-```bash
-./tools/preview-penalty.sh /path/to/lvgl-9.5.0
-```
-
-`MANIFEST.md` lists exactly which baseline files this layer replaces.
-
-The game builds, its host tests pass, and the v1.1 image has been flashed and played on a real device.
-
-## Layout
-
-```text
-main/penalty_*.{c,h}         rules, scene, UI, localisation, audio, app adapter
-main/main.c                  portrait cover -> game -> cover
-assets/{images,fonts,music}/penalty/
-                             artwork, font subset, sound effects
-tests/                       host tests and the desktop LVGL render harness
-tools/                       asset generation, preview, validation gate
-penalty/docs/                design, localisation and validation records
-```
-
-`main/penalty_model.c` carries the rules as plain C with no ESP-IDF or LVGL dependency, which is why the probabilities can be tested on a host.
+`MANIFEST.md` records the base, source commit, launcher contract, and every added or replaced path. The current package's full validation passed on 2026-09-23; the exact v1.4.2 GitHub firmware still needs on-device verification of the default Chinese startup and the shorter English Keeper title.
 
 ## Licence
 
-MIT, with the FoloToy baseline's copyright notice kept in [LICENSE](LICENSE). The Chinese subset is generated from Source Han Sans SC under the SIL Open Font License, which is bundled beside it; the sound effects are CC0; the artwork was generated with an AI image tool. Details are in [`assets/README.md`](assets/README.md).
+MIT, retaining the FoloToy baseline copyright notice in [LICENSE](LICENSE). The Chinese font subset uses Source Han Sans SC under the bundled SIL Open Font License; the sound effects are CC0; artwork source and generation notes are recorded in [`assets/README.md`](assets/README.md).

@@ -20,10 +20,17 @@ static penalty_sfx_event_t result_event(penalty_outcome_t outcome) {
     case PENALTY_WEAK:
     case PENALTY_GREEN_SAVE:
     case PENALTY_PERFECT_SAVE:
+    case PENALTY_KEEPER_CATCH:
+    case PENALTY_KEEPER_PARRY:
         return PENALTY_SFX_SAVE;
     case PENALTY_HIGH:
     case PENALTY_TIMEOUT:
         return PENALTY_SFX_MISS;
+    case PENALTY_KEEPER_WRONG_WAY:
+    case PENALTY_KEEPER_READ_MISS:
+    case PENALTY_KEEPER_EARLY:
+    case PENALTY_KEEPER_LATE:
+        return PENALTY_SFX_GOAL;
     default:
         return PENALTY_SFX_NONE;
     }
@@ -40,7 +47,7 @@ static penalty_sfx_event_t difficulty_event(penalty_difficulty_t difficulty) {
 }
 
 static bool is_confirm_transition(penalty_state_t before, penalty_state_t after) {
-    return (before == PENALTY_ORIENT && after == PENALTY_TITLE) ||
+    return (before == PENALTY_COVER && after == PENALTY_TITLE) ||
            (before == PENALTY_TITLE &&
             (after == PENALTY_SETTINGS || after == PENALTY_AIM || after == PENALTY_HELP)) ||
            (before == PENALTY_SETTINGS && after == PENALTY_TITLE) ||
@@ -71,7 +78,8 @@ size_t penalty_audio_events(penalty_audio_tracker_t *tracker,
     if (before->completed != after->completed)
         append(result_event(after->current.outcome), events, capacity, &count);
     else if (before->state == PENALTY_RESULT && after->state == PENALTY_SUMMARY)
-        append(after->goals == PENALTY_SHOTS ? PENALTY_SFX_FLAWLESS : PENALTY_SFX_FULL_TIME,
+        append((after->mode == PENALTY_MODE_KEEPER ? after->saves : after->goals) == PENALTY_SHOTS
+                   ? PENALTY_SFX_FLAWLESS : PENALTY_SFX_FULL_TIME,
                events, capacity, &count);
     else if (before->state == PENALTY_AIM && after->state == PENALTY_CHARGE)
         append(PENALTY_SFX_CHARGE, events, capacity, &count);

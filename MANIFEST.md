@@ -2,12 +2,15 @@
 
 Exactly which files this application layer touches in the FoloToy AI Passport baseline, and where each one lands.
 
+- **Play ID / version**: `penalty` / `1.4.2`
+- **Authoritative source commit**: `d5f08e7a1d345f9d9cac5552167eaf4166c8f5d0`
+- **Launcher contract**: `1`
 - **Base commit**: `ccd3576` (2026-09-14) — `fix(battery): restore previous CW2017 profile`
   Full hash: `ccd3576e304f7e17d9a0d4c12a2d05db379b14c0`
-- **Added**: 110 files — new paths, no conflict risk when you update upstream.
-- **Modified**: 20 files — baseline files this application rewrites. These are overwritten by `apply.sh`.
+- **Added**: 136 files — new paths, no conflict risk when you update upstream.
+- **Modified**: 22 files — baseline files this application rewrites. These are overwritten by `apply.sh`.
 
-The base commit is the tree these files were cut against. `apply.sh` copies by path and does not check the target's commit, so on a newer upstream these modified files will silently replace whatever upstream put there; review them before applying on a moving baseline.
+The base commit is the tree these files were cut against. `apply.sh` checks the target commit and stops on a mismatch unless the operator deliberately passes `--force`. Always run `--dry-run` before applying the layer.
 
 ## Modified baseline files
 
@@ -23,6 +26,8 @@ components/bsp/src/bsp_audio.c
 components/bsp/src/bsp_display_lvgl.c
 docs/README.md
 docs/README.zh_CN.md
+docs/development/engineering/build-and-test.md
+docs/development/engineering/build-and-test.zh_CN.md
 docs/hardware-design/AI_HARDWARE_DEVELOPMENT_GUIDE.md
 docs/hardware-design/AI_HARDWARE_DEVELOPMENT_GUIDE.zh_CN.md
 main/CMakeLists.txt
@@ -61,8 +66,18 @@ assets/images/penalty/gameplay-concept-v1-320x240.png
 assets/images/penalty/gameplay-concept-v1-source.png
 assets/images/penalty/gameplay-concept-v1.json
 assets/images/penalty/gameplay-v2/background-320x240.png
+assets/images/penalty/gameplay-v2/background-240x240.png
 assets/images/penalty/gameplay-v2/background-source-v1.0.png
 assets/images/penalty/gameplay-v2/background-source.png
+assets/images/penalty/gameplay-v2/blue-striker-0-88x88.png
+assets/images/penalty/gameplay-v2/blue-striker-1-88x88.png
+assets/images/penalty/gameplay-v2/blue-striker-2-88x88.png
+assets/images/penalty/gameplay-v2/blue-striker-3-88x88.png
+assets/images/penalty/gameplay-v2/blue-striker-4-88x88.png
+assets/images/penalty/gameplay-v2/blue-striker-5-88x88.png
+assets/images/penalty/gameplay-v2/blue-striker-6-88x88.png
+assets/images/penalty/gameplay-v2/blue-striker-7-88x88.png
+assets/images/penalty/gameplay-v2/blue-striker-8-88x88.png
 assets/images/penalty/gameplay-v2/ball-10.png
 assets/images/penalty/gameplay-v2/ball-12.png
 assets/images/penalty/gameplay-v2/ball-14.png
@@ -76,6 +91,10 @@ assets/images/penalty/gameplay-v2/keeper-0-56x56.png
 assets/images/penalty/gameplay-v2/keeper-1-56x56.png
 assets/images/penalty/gameplay-v2/keeper-2-56x56.png
 assets/images/penalty/gameplay-v2/keeper-3-56x56.png
+assets/images/penalty/gameplay-v2/keeper-4-56x56.png
+assets/images/penalty/gameplay-v2/keeper-5-56x56.png
+assets/images/penalty/gameplay-v2/keeper-6-56x56.png
+assets/images/penalty/gameplay-v2/keeper-extra-3-source.png
 assets/images/penalty/gameplay-v2/keeper-sheet-source-v1.0.png
 assets/images/penalty/gameplay-v2/keeper-sheet-source.png
 assets/images/penalty/gameplay-v2/keeper-source-0-v1.0.png
@@ -90,6 +109,10 @@ assets/images/penalty/gameplay-v2/manifest.json
 assets/images/penalty/gameplay-v2/striker-0-88x88.png
 assets/images/penalty/gameplay-v2/striker-1-88x88.png
 assets/images/penalty/gameplay-v2/striker-2-88x88.png
+assets/images/penalty/gameplay-v2/striker-3-88x88.png
+assets/images/penalty/gameplay-v2/striker-4-88x88.png
+assets/images/penalty/gameplay-v2/striker-blue-9-source.png
+assets/images/penalty/gameplay-v2/striker-red-5-source.png
 assets/images/penalty/gameplay-v2/striker-sheet-source.png
 assets/images/penalty/gameplay-v2/striker-source-0.png
 assets/images/penalty/gameplay-v2/striker-source-1.png
@@ -114,6 +137,7 @@ main/penalty_ui.c
 main/penalty_ui.h
 penalty/README.md
 penalty/README.zh_CN.md
+penalty/VERSION
 penalty/docs/community-submission.md
 penalty/docs/community-submission.zh_CN.md
 penalty/docs/game-design.md
@@ -126,6 +150,12 @@ penalty/docs/plans/2026-09-16-audio-feedback-design.md
 penalty/docs/plans/2026-09-16-audio-feedback-design.zh_CN.md
 penalty/docs/plans/2026-09-16-dynamic-copy-design.md
 penalty/docs/plans/2026-09-16-dynamic-copy-design.zh_CN.md
+penalty/docs/plans/2026-09-22-portrait-gameplay-design.md
+penalty/docs/plans/2026-09-22-portrait-gameplay-design.zh_CN.md
+penalty/docs/plans/2026-09-23-goalkeeper-mode-design.md
+penalty/docs/plans/2026-09-23-goalkeeper-mode-design.zh_CN.md
+penalty/docs/plans/2026-09-23-goalkeeper-mode-implementation-plan.md
+penalty/docs/plans/2026-09-23-goalkeeper-mode-implementation-plan.zh_CN.md
 penalty/docs/validation.md
 penalty/docs/validation.zh_CN.md
 penalty/publishing/community-cover-update.json
@@ -148,6 +178,7 @@ tools/convert-penalty-gameplay.py
 tools/generate-penalty-fonts.py
 tools/generate-penalty-sfx.py
 tools/preview-penalty.sh
+tools/prepare-penalty-action-art.py
 tools/style-penalty-art.py
 ```
 
@@ -156,5 +187,5 @@ tools/style-penalty-art.py
 In the source repository that produced this layer:
 
 ```bash
-git diff --name-status ccd3576 HEAD
+git diff --name-status ccd3576 d5f08e7
 ```

@@ -71,6 +71,12 @@ static void test_result_families(void) {
         {PENALTY_PERFECT_SAVE, PENALTY_SFX_SAVE},
         {PENALTY_HIGH, PENALTY_SFX_MISS},
         {PENALTY_TIMEOUT, PENALTY_SFX_MISS},
+        {PENALTY_KEEPER_CATCH, PENALTY_SFX_SAVE},
+        {PENALTY_KEEPER_PARRY, PENALTY_SFX_SAVE},
+        {PENALTY_KEEPER_WRONG_WAY, PENALTY_SFX_GOAL},
+        {PENALTY_KEEPER_READ_MISS, PENALTY_SFX_GOAL},
+        {PENALTY_KEEPER_EARLY, PENALTY_SFX_GOAL},
+        {PENALTY_KEEPER_LATE, PENALTY_SFX_GOAL},
     };
     for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
         penalty_audio_tracker_t tracker = {0};
@@ -113,6 +119,13 @@ static void test_ui_and_full_time_events(void) {
     before = model(PENALTY_RESULT, 100);
     after = model(PENALTY_SUMMARY, 1000);
     after.goals = 5;
+    assert(penalty_audio_events(&tracker, &before, &after, 1000, events, 3) == 1);
+    assert(events[0] == PENALTY_SFX_FLAWLESS);
+
+    before = model(PENALTY_RESULT, 100);
+    after = model(PENALTY_SUMMARY, 1000);
+    after.mode = PENALTY_MODE_KEEPER;
+    after.saves = 5;
     assert(penalty_audio_events(&tracker, &before, &after, 1000, events, 3) == 1);
     assert(events[0] == PENALTY_SFX_FLAWLESS);
 }

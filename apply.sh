@@ -5,8 +5,9 @@
 # Penalty game adds to, or changes in, the upstream firmware baseline, so they
 # have to be copied into a checkout of that baseline before anything can build.
 #
-#   ./apply.sh /path/to/ai-passport           copy the files
 #   ./apply.sh --dry-run /path/to/ai-passport list what would change
+#   ./apply.sh /path/to/ai-passport           copy the files
+#   ./apply.sh --force /path/to/ai-passport   override a base mismatch
 #
 # Files this layer changes are overwritten in the target. MANIFEST.md lists
 # which baseline files those are; the four under components/bsp are the ones
@@ -14,15 +15,31 @@
 
 set -eu
 
+expected_base=ccd3576e304f7e17d9a0d4c12a2d05db379b14c0
 dry_run=false
-if [ "${1:-}" = "--dry-run" ] || [ "${1:-}" = "-n" ]; then
-    dry_run=true
-    shift
-fi
+force=false
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --dry-run | -n) dry_run=true; shift ;;
+        --force) force=true; shift ;;
+        --) shift; break ;;
+        -*) echo "$0: unknown option: $1" >&2; exit 2 ;;
+        *) break ;;
+    esac
+done
 
 target=${1:-}
 if [ -z "$target" ]; then
-    echo "usage: $0 [--dry-run] <path-to-ai-passport-checkout>" >&2
+    echo "usage: $0 [--dry-run] [--force] <path-to-ai-passport-checkout>" >&2
+    exit 2
+fi
+
+target_commit=$(git -C "$target" rev-parse HEAD 2>/dev/null || true)
+if [ "$target_commit" != "$expected_base" ] && [ "$force" != true ]; then
+    echo "$0: target commit does not match the declared baseline" >&2
+    echo "    expected: $expected_base" >&2
+    echo "    actual:   ${target_commit:-not a Git checkout}" >&2
+    echo "    inspect MANIFEST.md and run with --force only after review" >&2
     exit 2
 fi
 if [ ! -d "$target" ]; then
@@ -42,7 +59,8 @@ here=$(cd "$(dirname "$0")" && pwd)
 list=$(mktemp)
 cleanup() { rm -f "$list"; }
 trap cleanup EXIT INT TERM
-(cd "$here" && find . -type f -not -path './.git/*') | sed 's|^\./||' | sort > "$list"
+(cd "$here" && find . -type f -not -path './.git' -not -path './.git/*') |
+    sed 's|^\./||' | sort > "$list"
 
 added=0
 changed=0

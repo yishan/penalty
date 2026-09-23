@@ -4,9 +4,129 @@
 
 # Penalty — Validation and Device Checklist
 
-Updated: 2026-09-18. This record distinguishes implementation from physical acceptance.
+Updated: 2026-09-23. This record distinguishes implementation from physical acceptance.
 
-## v1.1 visual refresh — current local artifact
+## v1.4.2 Chinese default, shorter keeper title, and Launcher contract — release candidate
+
+The English title menu now uses `KEEPER CHALLENGE` instead of `GOALKEEPER CHALLENGE`. Simplified Chinese is the default when the language preference is missing, invalid, or unavailable; a valid saved English preference still restores English. The application now also exposes Launcher contract version 1 lifecycle entry points. No gameplay rule, timing, art, audio, or control behavior changes in this revision.
+
+- ESP-IDF 5.5.3 firmware build and merged-image verification: PASS after the Launcher contract integration. The last validated application is 1,487,680 bytes, the merged image is 1,553,216 bytes, and the factory partition remains 82% free.
+- Static/host gate: PASS. Focused model, preference, and localization tests cover the Chinese default, invalid-value fallback, retained valid English preference, and exact English menu copy. All repository, scene, font, art, audio, display, and firmware-layout checks also pass.
+- Actual LVGL 9.5.0 rendering: PASS for the default Chinese cover/title, the English title containing `KEEPER CHALLENGE`, both language covers, and 50 sessions/entry-exit cycles in the 24 KB pool. No tested label overflows. Free memory after warm-up remains 12,248 bytes and the largest tested moving-frame redraw is 27,640 pixels. Captures are under `build/penalty-preview/`; they are desktop LVGL renders, not device photographs.
+- Device verification for v1.4.2: NOT RUN. The connected device still has v1.4.1; first-start Chinese behavior and the shorter English title remain pending on-device observation.
+
+```text
+File: build/FoloToy-AI-Passport-Penalty-v1.4.2-full.bin
+Canonical copy: build/FoloToy-AI-Passport-full.bin
+Size: recorded in the GitHub Release asset metadata
+Flash offset: 0x0
+SHA-256: see the attached SHA256SUMS.txt in the GitHub Release
+Build: PASS
+Host tests: PASS
+Device tests: NOT RUN
+Unverified: physical default-language startup and English menu readability
+```
+
+Use the project-and-version file attached to the v1.4.2 GitHub Release for device acceptance, and verify it against the attached `SHA256SUMS.txt`. Flashing it at `0x0` installs the complete standalone firmware and can reset NVS because the merged file spans the partition gaps. This makes it suitable for verifying the new no-preference Chinese default. The v1.4.1 image below remains the historical device-started build.
+
+## v1.4.1 cover prompt alignment fix — historical device-tested artifact
+
+The cover prompt is now localized at runtime in both languages instead of mixing baked artwork text with an overlaid label. The shorter copy is `PRESS OK` in English and the equivalent “press OK to start” instruction in Chinese. Both variants use the same font, 156-pixel text box, vertical position, centered alignment, and transparent background over an empty prompt panel, so switching language cannot expose or offset text from the artwork. Gameplay is unchanged.
+
+- ESP-IDF 5.5.3 firmware build and merged-image verification: PASS. The application is 1,476,480 bytes and the factory partition remains 82% free.
+- Static/host gate: PASS. Repository, model, scene, localization, preferences, font, art, navigation, audio, display, firmware-layout, and merged-image checks all pass. The art contract now verifies that the prompt panel contains no baked text.
+- Actual LVGL 9.5.0 rendering: PASS for centered English and Chinese cover prompts, plus 50 sessions/entry-exit cycles in the 24 KB pool. Free memory after warm-up remains 12,248 bytes and the largest tested moving-frame redraw is 26,824 pixels. Captures are under `build/penalty-preview/`; they are desktop LVGL renders, not device photographs.
+- Device installation/startup on 2026-09-23: PASS for the exact v1.4.1 image below on the connected ESP32-C3 revision 1.1 with 8 MB embedded Flash. Esptool completed its data-hash verification. A bounded 12-second reset/startup observation booted the factory app and initialized the 240 x 320 display/LVGL, ES8311 audio, CW2017 battery gauge, and ADC buttons without a reset loop, assertion, watchdog, or persistent error. Penalty entry reported 249,200 bytes free heap and a 114,688-byte largest block.
+- Physical cover acceptance: NOT RUN. The corrected English and Chinese prompt alignment and readability still require user observation on the display.
+- Gameplay acceptance boundary: the user reported that all gameplay outside the cover prompt is fine on the previously flashed v1.4.0 image. This change intentionally does not modify gameplay rules, controls, timing, art, or audio.
+
+```text
+File: build/FoloToy-AI-Passport-Penalty-v1.4.1-full.bin
+Canonical copy: build/FoloToy-AI-Passport-full.bin
+Size: 1542016 bytes
+Flash offset: 0x0
+SHA-256: 5dd8954564e8a8309cf146c6a9de05851562ecd89e75304d08346050aca08486
+Build: PASS
+Host tests: PASS
+Device tests: PASS (flash and bounded startup scope)
+Unverified: physical English/Chinese cover alignment and readability
+```
+
+Use the project-and-version file above for v1.4.1 device acceptance. It is byte-identical to the canonical merged image produced by the same successful gate. Flashing it at `0x0` installs the complete standalone firmware and can reset NVS because the merged file spans the partition gaps. Use segmented `idf.py flash` if the saved language must be preserved. The v1.4.0 image below remains the historical device-started build.
+
+## v1.4.0 standalone goalkeeper challenge — historical device-tested artifact
+
+The title now offers separate Shoot and Keep challenges. Keep retains the portrait behind-the-shooter camera: the AI shooter wears blue and truthfully previews one of six locked shot directions through body/foot poses for 900 / 600 / 350 ms on Easy / Normal / Hard, while the player controls the distant black keeper. The same two-press timing meter decides the dive. Exact-cell save rates are 90% / 65% / 25% on dark line / green / outside green; the other row in the same column uses 35% / 20% / 5%; another column is always conceded. Five attempts lead to a saves summary.
+
+- ESP-IDF 5.5.3 firmware build and merged-image verification: PASS. The application is 1,476,656 bytes and the factory partition remains 82% free.
+- Static/host gate: PASS. Pure-C tests cover both modes, all target/timing/roll relations, truthful locked cues, three cue durations, five saves, replay mode retention, audio outcomes, bilingual copy, fonts, and deterministic art generation.
+- Actual LVGL 9.5.0 rendering: PASS for the four-item menu, six blue-shooter cues, timing state, all six goalkeeper outcomes, both summaries, and 50 sessions/entry-exit cycles in the 24 KB pool. Free memory after warm-up remains 12,248 bytes and the largest tested moving-frame redraw is 26,824 pixels. Captures are under `build/penalty-preview/`; they are desktop LVGL renders, not device photographs.
+- Device installation/startup on 2026-09-23: PASS for the exact image below on an ESP32-C3 revision 1.1 with 8 MB embedded Flash. The write completed with esptool's data-hash verification. A bounded 12-second reset/startup observation booted the factory app and initialized the 240 x 320 display/LVGL, ES8311 audio, CW2017 battery gauge, and ADC buttons without a reset loop, assertion, watchdog, or persistent error. Penalty entry reported 249,200 bytes free heap and a 114,688-byte largest block.
+- Physical gameplay acceptance: PASS for gameplay behavior by user report on 2026-09-23. The user found no gameplay issue outside the cover. The English and Chinese cover prompts were reported misaligned; that isolated presentation defect is addressed by v1.4.1 above. Instrumented stack headroom and endurance remain unmeasured.
+
+```text
+File: build/FoloToy-AI-Passport-Penalty-v1.4.0-full.bin
+Canonical copy: build/FoloToy-AI-Passport-full.bin
+Size: 1542192 bytes
+Flash offset: 0x0
+SHA-256: 44278fec6d7a7d6892b2a3aae4afbca3d1dc1b0cb5819cf518c6bda1ff3c920d
+Build: PASS
+Host tests: PASS
+Device tests: PASS (flash and bounded startup scope)
+Gameplay acceptance: PASS by user report, excluding the cover prompt defect
+Unverified: instrumented stack headroom and endurance
+```
+
+This historical image is byte-identical to the canonical merged image produced by its successful gate. The v1.3 image below remains an older historical artifact.
+
+## v1.3 portrait gameplay — historical local artifact
+
+The display now stays at 240 × 320 from cover through summary. The cover replaces its rotation diagram with `PRESS OK TO START`; the title, Settings, Help, pitch, 192-pixel power meter, results, and summary are reflowed for portrait. Each kick starts at top-center. DOWN follows `top-center -> bottom-center -> top-left -> bottom-left -> top-right -> bottom-right -> top-center`; UP follows the exact reverse. Goal probabilities, difficulty widths, keeper logic, audio, language persistence, and the five-kick session are unchanged.
+
+- ESP-IDF 5.5.3 firmware build and merged-image verification: PASS. The application is 1,178,800 bytes and the factory partition remains 86% free.
+- Static/host gate: PASS. Model tests cover both complete target cycles and locked charge behavior; scene tests cover portrait coordinates and every target/outcome path; localization, fonts, art generation, audio, preferences, input lifecycle, display rounding, and firmware layout also pass.
+- Actual LVGL 9.5.0 rendering: PASS for the cover, both languages, all six targets, all outcomes, and 50 sessions/entry-exit cycles in the 24 KB pool. Free memory after warm-up remains 12,248 bytes and the largest tested moving-frame redraw is 27,352 pixels. Captures were generated under `/tmp/penalty-preview-portrait/`; they are desktop LVGL renders, not device photographs.
+- Device verification: NOT RUN. Portrait clipping at the rounded corners, physical UP/DOWN feel, small target/precision-line readability, audio synchronization, battery display, and endurance remain device checks.
+
+```text
+File: build/FoloToy-AI-Passport-full.bin
+Size: 1244336 bytes
+Flash offset: 0x0
+SHA-256: 3473ba02ac7595573890f24e8cd7da73c60eafeadeb2bf08bda88d3ccbcb0916
+Build: PASS
+Host tests: PASS
+Device tests: NOT RUN
+Unverified: portrait corner clipping, physical navigation feel, small target/line
+  readability, audio/display cadence, measured board heap/stack, and endurance
+```
+
+Use this merged image for v1.3 device acceptance. Flashing at `0x0` installs the complete standalone image and initializes its bundled NVS state. Older artifacts below remain historical records.
+
+## v1.2 row-wise target navigation — historical local artifact
+
+Every kick starts at top-center. UP, which is screen-right in the intended landscape hold, follows `top-center -> top-right -> bottom-left -> bottom-center -> bottom-right -> top-left -> top-center`. DOWN follows the exact reverse cycle. This keeps movement inside either row aligned with the physical button direction, while crossing rows begins from the new row's left or right edge. Selection still cycles at both ends; shot probabilities and every other rule are unchanged.
+
+- ESP-IDF 5.5.3 firmware build and merged-image verification: PASS. App size is 1,220,256 bytes and the unchanged factory partition remains 85% free.
+- Static/host gate: PASS. The new regression test covers both complete cycles, reverse movement, top-center initialization and resynchronization, plus the locked-target behavior during charge. Existing repository, model, scene, localization, preferences, fonts, art, audio, display, and firmware-layout checks remain green.
+- Actual LVGL 9.5.0 rendering: PASS for all six target selections and 50 sessions/entry-exit cycles in the 24 KB pool. Free memory after warm-up remains 12,248 bytes and the largest tested moving-frame redraw is 27,535 pixels. Captures are in `build/penalty-navigation-v1.2-preview/`; they are desktop LVGL renders, not device photographs.
+- Device verification: NOT RUN. The physical UP/right and DOWN/left control feel, row transition clarity, input/display cadence, and endurance remain device checks.
+
+```text
+File: build/Penalty-v1.2-row-navigation-standalone-full.bin
+Canonical copy: build/FoloToy-AI-Passport-full.bin
+Size: 1285792 bytes
+Flash offset: 0x0
+SHA-256: 3c7a24f97407ca50377d3c40efa3cace43df6f91955e7f8b6c6dfa73488b3d89
+Build: PASS
+Host tests: PASS
+Device tests: NOT RUN
+Unverified: physical navigation feel and row-transition clarity, input/display
+  cadence, measured board heap/stack, and endurance
+```
+
+Use this merged image for v1.2 device acceptance. Flashing at `0x0` installs the complete standalone image and initializes its bundled NVS state. The v1.1 device-verified artifact remains unchanged.
+
+## v1.1 visual refresh — historical device-verified artifact
 
 The portrait cover adds a fixed Chinese game mark beneath `PENALTY`, all active pitch art uses horizontal grass bands, and the keeper kit is black. The landscape title screen no longer renders its former English/Chinese slogan. Rules, controls, probability calibration, localization behavior, audio, and persistence are unchanged from v1.0.
 
@@ -255,7 +375,7 @@ Reproduce from the repository root:
 
 - All three game keys use PRESS; subsequent CLICK/DOUBLE events are ignored. Physical UP means logical right, DOWN means left. Boot enters the portrait cover directly; no hardware-demo menu is displayed.
 - Button timestamps drive power locking. Events over 100 ms late resynchronize uncommitted aim/charge instead of producing a delayed shot. Timeout feedback may wait an extra 100 ms for an already queued press; the valid input window remains exactly 4,000 ms by event time.
-- Difficulty and mute last until returning to the portrait cover; retry resets scores but retains both settings. Default difficulty is EASY. Language alone is stored under the existing NVS namespace/key and restored before the first cover; missing/invalid storage falls back to English. No network access or new partitions are used.
+- Difficulty and mute last until returning to the portrait cover; retry resets scores but retains both settings. Default difficulty is EASY. Language alone is stored under the existing NVS namespace/key and restored before the first cover; missing/invalid storage falls back to Simplified Chinese while a valid saved English choice remains English. No network access or new partitions are used.
 - Green zones, the inner two-value dark line, the keeper's six-cell target, and the 0–99 outcome roll are chosen once per new shot. Input recovery preserves all four. Both aim and charge show the same zones and six cells; the cursor does not obscure the line. The green window slows to one-fifth speed in both directions.
 - Audio uses a four-item semantic queue and 10 ms PCM chunks with cooperative stop. Format, explicit 60% volume, and write failures degrade to silent play and remain separately observable. Battery polling is in that worker, not the LVGL task. A missing worker leaves the game playable with unknown battery on landscape screens and no sound; the portrait cover never shows a battery label.
 - Idle cover/title/Help/aim/summary screens dim to 15% backlight after 60 seconds; the first PRESS wakes without taking a shot. Exit restores 100% backlight.
@@ -283,7 +403,7 @@ For an initial smoke test, check correct orientation, LEFT/RIGHT mapping, one fu
 Use the verified merged image for a blank board; preserve existing NVS with segmented flashing when appropriate, following the repository [build instructions](../../docs/development/engineering/build-and-test.md). The v1.1 image passed this checklist on a real device.
 
 1. After flashing the merged image, power on. Confirm the first application screen is the approved portrait pixel cover with the English turn prompt, without FoloToy or Display/Button menus and without any battery text. Rotate the device clockwise (original top to the right) and press OK once. The title must be upright, fill 320 × 240 logical pixels, have four correct black corners, and show the live battery label in its header.
-2. Open Settings. Cycle Difficulty through Easy / Normal / Hard, toggle Sound, then change Language to Simplified Chinese. Confirm the current page changes immediately and all four rows fit. Return to the title and open Help; verify Chinese glyphs are present, legible, and unclipped. Return to Settings, select the intended difficulty, then choose Play. Confirm green widths of 20 / 11 / 6 values and a two-value inner dark line. From the initial bottom-center cell, press physical UP repeatedly and confirm bottom-center → bottom-left → top-left → top-center → top-right → bottom-right → bottom-center; physical DOWN reverses the ring. OK starts the meter; a separate OK locks it. The entry gesture must not also start a shot.
+2. Open Settings. Cycle Difficulty through Easy / Normal / Hard, toggle Sound, then change Language to Simplified Chinese. Confirm the current page changes immediately and all four rows fit. Return to the title and open Help; verify Chinese glyphs are present, legible, and unclipped. Return to Settings, select the intended difficulty, then choose Play. Confirm green widths of 20 / 11 / 6 values and a two-value inner dark line. From the initial top-center cell, press physical UP repeatedly and confirm top-center → top-right → bottom-left → bottom-center → bottom-right → top-left → top-center; physical DOWN follows the exact reverse cycle. Within either row, UP must always move right and DOWN left. OK starts the meter; a separate OK locks it. The entry gesture must not also start a shot.
 3. Confirm all six cell outlines and the bright selected frame remain readable. The zones must be visible before charge, stay fixed during it, and change for the next kick. Check slow green traversal in both directions and practical readability/timing of the dark line. Exercise weak, dark-line goal/save, ordinary-green goal/save, outside-green goal/save, high, and timeout results. Confirm the displayed ball cell, keeper cell, result copy, sound family, and exactly one recorded slot per attempt agree. The exact 90% / 65% / 25% averages are automated model evidence; a few device outcomes cannot statistically revalidate them.
    On EASY, confirm the localized dark-line teaching message remains on every kick. On NORMAL/HARD it appears only on kick one; later localized encouragement stays unchanged through aim/charge, adjacent kicks do not repeat, and kick five uses the dedicated final-kick message. Result commentary must match the actual outcome and fit without clipping in both languages.
 4. Finish five shots, replay, return to the title, toggle Sound, and replay muted. Difficulty and mute must survive replay/title; returning to the cover resets both. Language must remain Chinese on the cover, after re-entry, and after a normal power-cycle. Switch back to English and repeat the restart check. A session must not invent an opponent score or sudden death.

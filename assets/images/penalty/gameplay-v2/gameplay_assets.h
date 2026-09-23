@@ -2,6 +2,7 @@
 #pragma once
 #include "lvgl.h"
 extern const lv_image_dsc_t penalty_art_background;
-extern const lv_image_dsc_t penalty_art_striker[3];
-extern const lv_image_dsc_t penalty_art_keeper[4];
+extern const lv_image_dsc_t penalty_art_striker[5];
+extern const lv_image_dsc_t penalty_art_blue_striker[9];
+extern const lv_image_dsc_t penalty_art_keeper[7];
 extern const lv_image_dsc_t penalty_art_balls[6];

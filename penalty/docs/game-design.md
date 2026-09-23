@@ -4,22 +4,22 @@
 
 # Penalty — Game Design Outline
 
-Version: 1.0 · Date: 2026-09-16 · Stage: six-target shooting and calibrated probabilities integrated. [Validation status](validation.md) separates host, firmware, and device evidence. The [localization design](localization.md) records the language menu, persistence, font subset and overflow policy.
+Version: 1.4 · Date: 2026-09-23 · Stage: portrait shooting and standalone goalkeeper challenges integrated locally. [Validation status](validation.md) separates host, firmware, and device evidence. The [localization design](localization.md) records the language menu, persistence, font subset and overflow policy.
 
 ## 1. Concept and player goal
 
-An offline pixel-art penalty game for short breaks with AI Passport. A player chooses a target and times the kick using three buttons, then sees a clear goal, save, or miss. The intended session lasts about 30–90 seconds; this is a playtest target, not a time limit.
+An offline pixel-art penalty game for short breaks with AI Passport. The player chooses either a shooting challenge or a standalone goalkeeper challenge, selects one of six targets with three buttons, times the action, and receives a clear result. The intended session lasts about 30–90 seconds; this is a playtest target, not a time limit.
 
 The core tension is choosing a direction while stopping the power marker in its sweet spot. A perfect kick should visibly reward timing instead of making every result a random guess.
 
-The brief builds on the penalty/Pong feasibility discussion in Codex task `01a0a2a6-7e5c-7dd2-af45-4c5d90ef5403`. Version 0.2 adopts the user's landscape proposal: an entry prompt, a 90° counterclockwise game image, UP = right, DOWN = left, and OK = confirm. Version 0.3 adopts the approved portrait pixel-art boot cover and standalone game shell. Version 0.9 organizes difficulty, sound and language under Settings and adds a persistent English / Simplified Chinese choice. No Pong prerequisite is needed.
+The brief builds on the penalty/Pong feasibility discussion in Codex task `01a0a2a6-7e5c-7dd2-af45-4c5d90ef5403`. Version 0.2 introduced the earlier landscape flow; version 0.3 added the approved portrait pixel-art boot cover and standalone game shell; version 0.9 organized difficulty, sound and language under Settings with a persistent English / Simplified Chinese choice. Version 1.3 replaced the landscape flow with an upright 240 × 320 experience and vertical target scanning; version 1.4 adds the standalone goalkeeper challenge. No Pong prerequisite is needed.
 
 ## 2. Scope and releases
 
 | Stage | Included | Completion condition |
 | --- | --- | --- |
 | MVP: shooting challenge | Offline single player; six upper/lower targets; two-press power meter; six-target AI keeper; five shots; result summary; replay; mute; short effects | A complete five-shot session runs on device with clear input and outcomes |
-| Next: goalkeeper challenge | Five AI shots; player selects a direction and confirms a save within a visible timing window | Direction and timing both matter; late/early saves are explained |
+| v1.4: goalkeeper challenge | Five AI shots; truthful blue-shooter cues; player selects the black keeper's dive and confirms it within a visible timing window | Six cues, timing bands, outcomes, animation, audio and bilingual UI pass host/render checks |
 | Later: alternating shootout | Player shoots and keeps against AI; five paired rounds; early victory and sudden death | Turn order and winner rules pass host tests |
 | v0.4: difficulty | Easy / Normal / Hard; random green zones; a two-value guaranteed-goal line; slow green meter | Automated rule/render checks plus pending device timing acceptance |
 | v1.0: six-target rules | Two rows of three targets; ring navigation; six-target keeper; 90% / 65% / 25% calibrated average goal rates | Exhaustive model probabilities and actual LVGL target/trajectory checks pass |
@@ -34,7 +34,7 @@ Not included: free-roaming football, 3D physics, networking, leaderboards, multi
 | Current baseline | Design consequence |
 | --- | --- |
 | ESP32-C3, 8 MB Flash, no PSRAM | Small objects and compact assets; no full-screen framebuffer allocation by the game |
-| Physical panel: 240 × 320 RGB565; 40 MHz SPI | Game coordinates: 320 × 240 landscape, image rotated 90° counterclockwise; local updates; provisional 20 FPS animation target |
+| Physical panel: 240 × 320 RGB565; 40 MHz SPI | Native 240 × 320 game coordinates; local updates; provisional 20 FPS animation target |
 | Current LVGL single buffer: 20 display rows | Preserve the buffer initially; measure refresh cost before expanding it |
 | UP / DOWN / OK on one ADC ladder | Sequential single-button actions; no simultaneous presses or held-direction requirement |
 | BSP already exposes PRESS, CLICK, DOUBLE, LONG | Use PRESS for timing-sensitive actions; do not count the subsequent CLICK/DOUBLE again |
@@ -44,24 +44,24 @@ Hardware/API references: [pin definitions](../../components/bsp/include/bsp_pins
 
 ## 4. Controls
 
-### Orientation and entry
+### Portrait entry
 
-On power-on, show the approved 240 x 320 portrait pixel cover: PENALTY title, the matching cream/dark-shadow Chinese game mark at the top of the footer, player facing the goal, horizontal grass bands, a black-kit keeper, and a clockwise-turn diagram. The cover deliberately has no battery overlay. Embedded labels: `TURN RIGHT 90° / THEN PRESS OK`. The original device top must point right. Confirmation switches to the 320 × 240 game title, whose image is rotated left by 90° relative to the original portrait orientation; live battery text appears in the landscape header. The title page shows the field and menu without the former English/Chinese slogan. This is a fixed quarter-turn, not a tilted perspective effect.
+On power-on, show the approved 240 × 320 pixel cover: PENALTY title, the matching cream/dark-shadow Chinese game mark, player facing the goal, horizontal grass bands, a black-kit keeper, and `PRESS OK TO START`. The cover deliberately has no battery overlay. The device stays upright when confirmation opens the 240 × 320 title screen; live battery text appears in the title and later game screens. The title page shows the field and menu without the former English/Chinese slogan.
 
-Confirmation is manual; the flow does not depend on orientation detection. Consume this OK event so it cannot also start the game. Keep the title, settings, play screen, results, and retry flow in landscape. Retry does not repeat the prompt. On exit, stop the game, restore portrait display and reset the input epoch, then return directly to the portrait cover. There is no hardware-demo launcher in the normal flow.
+Consume the entry OK event so it cannot also start the game. Keep the title, settings, play screen, results, retry flow, and cover in portrait. Retry does not repeat the prompt. On exit, stop the game, reset the input epoch, and return directly to the portrait cover. The stop path may idempotently request portrait as a safety action, but gameplay never enters landscape. There is no hardware-demo launcher in the normal flow.
 
 ### Button mapping
 
-UP advances clockwise and DOWN reverses around the target ring; OK confirms. The order is top-left → top-center → top-right → bottom-right → bottom-center → bottom-left → top-left. With the device held clockwise, UP/DOWN physically act as the right/left selectors shown by the game. The title menu contains Play, Settings and Help. Settings contains Difficulty, Sound, Language and Back. DOWN selects the previous option and UP the next. Start each shot at bottom-center and wrap at both ends of the six-target ring.
+UP and DOWN scan the selected target vertically; OK confirms. Each attempt starts at top-center. DOWN cycles `top-center → bottom-center → top-left → bottom-left → top-right → bottom-right → top-center`; UP follows the exact reverse. The two cells in a column therefore follow the physical vertical direction before selection advances to the next column. The title menu contains Shoot, Keep, Settings and Help. Settings contains Difficulty, Sound, Language and Back. DOWN selects the next menu option and UP the previous one.
 
 | Screen/state | UP / DOWN | Short OK | Long OK |
 | --- | --- | --- | --- |
-| Portrait cover | No action | Switch to landscape menu | Reset to portrait cover |
-| Title | Select Play, Settings, or Help | Activate selected item | Return to portrait cover |
+| Portrait cover | No action | Open portrait menu | Reset to portrait cover |
+| Title | Select Shoot, Keep, Settings, or Help | Activate selected item | Return to portrait cover |
 | Settings | Select Difficulty, Sound, Language, or Back | Cycle/toggle selected setting, or return | Return to portrait cover |
-| Help | No action | Return to landscape menu | Return to portrait cover |
-| Aim | Cycle the six targets in either direction | Lock target and start power meter | Exit current session |
-| Charge | No action | Lock power and kick | Exit current session |
+| Help | No action | Return to portrait menu | Return to portrait cover |
+| Aim | Scan the six kick/dive targets by column in either direction | Lock target and start timing meter | Exit current session |
+| Charge | No action | Lock timing and kick/dive | Exit current session |
 | Flight/result | No action | No action; automatic transition | Exit current session |
 | Summary | Select Retry or Title | Activate selection | Return to portrait cover |
 
@@ -113,30 +113,46 @@ The lower copy line is instructional only in EASY or on the first kick. Later NO
 
 Keeper target uses a seedable generator in pure logic and is fixed before the player commits target or power. Tests supply fixed seeds/decisions; device integration supplies a session seed. More difficult AI must not inspect a committed player choice and silently alter its decision.
 
+### 5.1 Standalone goalkeeper challenge — v1.4
+
+The goalkeeper challenge uses the same portrait camera behind the shooter. The AI shooter wears blue and stays in the foreground; the player controls the distant black-kit keeper. At the start of each attempt, the blue shooter's foot/hip/body pose truthfully cues one locked shot target for 900 ms on Easy, 600 ms on Normal, or 350 ms on Hard. The cue is shown once, then the shooter returns to ready; there are no false cues or post-input target changes.
+
+The player scans the same six cells, presses OK to lock a dive and start the timing meter, then presses OK again to dive. Green widths, two-value dark line, 0–100 meter path, five-attempt session, 4,000 ms timeout, and 600 ms presentation timing match the shooting challenge. The outcome is settled once from the preselected AI target, player dive, timing value, and preselected 0–99 roll:
+
+| Timing tier | Exact cell | Same column, other row | Different column |
+| --- | ---: | ---: | ---: |
+| Dark line | 90% save | 35% save | 0% save |
+| Rest of green | 65% save | 20% save | 0% save |
+| Outside green, 30–90 | 25% save | 5% save | 0% save |
+
+Values 0–29 are `TOO EARLY`; values 91–100 and the meter timeout are `TOO LATE`. Successful exact-cell reads use `CAUGHT!`; successful same-column coverage uses `PARRIED!`. A different column is `WRONG WAY`; a correct column that loses the probability roll is `READ IT - MISSED`. The summary reports saves out of five and retains goalkeeper mode on Retry.
+
+Runtime art uses five red-shooter frames for shooting mode, nine blue-shooter frames for goalkeeper mode (ready, contact, follow-through, six direction cues), and seven black-keeper frames (ready plus all six dive cells). These are real transparent sprites in Flash, not full-screen frame sequences. The animation visualizes the precomputed decision; collision does not change the result.
+
 ## 6. Screens and state flow
 
 ```text
-POWER ON → PORTRAIT COVER → LANDSCAPE MENU (PLAY / SETTINGS / HELP)
+POWER ON → PORTRAIT COVER → PORTRAIT MENU (SHOOT / KEEP / SETTINGS / HELP)
 SETTINGS (DIFFICULTY / SOUND / LANGUAGE / BACK) → TITLE
 HELP → TITLE (OK)
-TITLE → AIM → CHARGE → FLIGHT → RESULT → AIM (shots 1–4)
+SHOOT or KEEP → AIM → CHARGE → FLIGHT → RESULT → AIM (attempts 1–4)
                  └─ timeout ──→ RESULT → SUMMARY (shot 5)
-SUMMARY → AIM (Retry, reset session) / TITLE
-Any active state → EXITING → restore portrait → cover
+SUMMARY → AIM (Retry same mode, reset session) / TITLE
+Any active state → EXITING → cover
 ```
 
 Both flight and timeout use the same result-to-next-shot/summary decision. Result accounting is idempotent. Exit stops production of events before destroying the view.
 
-Suggested 320 × 240 logical landscape layout; all content, including text and hints, shares the rotation. Coordinates are design targets:
+Implemented 240 × 320 portrait layout:
 
 | Region | Vertical bounds | Content |
 | --- | --- | --- |
-| Header | y=0–17 | Difficulty, shot 1/5, goals, battery |
-| Field | y=18–182 | Illustrated stadium, target hints, striker, keeper, independent ball and shadow |
-| Power/result | y=182–203 | Horizontal meter, best band, marker or result text |
-| Footer | y=204–239 | LEFT/RIGHT arrows, OK hint, small exit hint |
+| Header | y=0–17 | Difficulty, attempt 1/5, goals or saves, battery |
+| Field | y=18–182 | Illustrated stadium, six target hints, red/blue striker, black keeper, independent ball and shadow |
+| Power/result | y=205–226 | 192-pixel meter, best band, marker or result text |
+| Footer | y=235–319 | Target/action text, interaction copy, long-OK hint |
 
-Keep critical labels and controls clear of the rounded corners, initially within x=32–287. Use the extra width to separate the three goal targets. These are logical landscape coordinates; do not swap the hardware pin-table width/height constants to implement the layout.
+Keep critical labels and controls clear of the rounded corners, normally within x=16–223. The pitch uses a native 240 × 240 center crop of the approved stadium; the active field clips it at y=18–182. Three goal columns remain centered at x=70/120/170. No runtime image scaling or full-screen game buffer is used.
 
 Look: dark green pitch, white goal lines, bright ball, original neutral player sprites, readable outlines. Distinguish zones and outcomes by labels/shapes as well as color. Keep the target visible through charge. Use scaling/position to suggest depth without a 3D renderer; avoid camera motion, full-screen effects, real club branding, or player likenesses.
 
@@ -154,13 +170,13 @@ Audio: brief kick, goal, save, and miss cues; cap each at 300 ms initially. Use 
 | `tests/test_penalty_model.c` | Host tests for rules, timing, transitions, duplicate input and reset |
 | `penalty/assets/` (when needed) | Editable game art/sound sources and attribution |
 
-The model does not include ESP-IDF or LVGL headers. Its session data includes state, shot index, goals, perfect count, selected/keeper directions, power, timestamps, seed, and five shot records. Each shot record includes direction, power, keeper choice, and outcome/reason. No player identity or network data.
+The model does not include ESP-IDF or LVGL headers. Its session data includes mode, state, attempt index, goals/saves, perfect count, player/opponent targets, timing value, timestamps, seed, and five attempt records. Each record includes both targets, timing, outcome roll, and outcome/reason. No player identity or network data.
 
 Use one owner for model changes. Button callbacks enqueue bounded events and return. UI access outside the LVGL task holds `bsp_lvgl_lock()`; audio and language-preference NVS writes run outside that lock in workers. Teardown stops timers, rejects stale session events, flushes the pending language preference, stops/joins workers, and only then deletes UI objects. If a worker cannot stop, retain the view until safe teardown is possible.
 
-The standalone shell in `main/main.c` boots directly into Penalty. Baseline demo source files remain as references but are not linked into this game. Returning to the cover stops the timer and service worker, restores portrait, recreates the screen, advances the input epoch, and restarts services. The approved cover uses a 153,600-byte const RGB565 array in Flash with no full-image RAM decode. Source and conversion recipe are recorded in [Assets](../../assets/README.md). No partitions or pins change.
+The standalone shell in `main/main.c` boots directly into Penalty. Baseline demo source files remain as references but are not linked into this game. Returning to the cover stops the timer and service worker, recreates the screen, advances the input epoch, and restarts services. The approved cover uses a 153,600-byte const RGB565 array in Flash and the gameplay background uses a 115,200-byte const RGB565 array, both with no full-image RAM decode. Source and conversion recipes are recorded in [Assets](../../assets/README.md). No partitions or pins change.
 
-Rotation uses `bsp_lvgl_set_landscape()`, backed by the locked esp_lvgl_port 2.9.0 hardware-rotation path. `rounded_flush_event()` now uses active logical dimensions. The partial buffer capacity stays unchanged; no full-screen rotation buffer is allocated. Orientation switches/restores under the LVGL lock; a failed switch attempts rollback and allows retry. Rotation, corner masking, and cover restoration still need physical-device validation.
+The game keeps the BSP's portrait baseline and does not request a quarter-turn. The partial buffer capacity stays unchanged, rounded-corner clipping continues to use the active 240 × 320 dimensions, and no full-screen rotation buffer is allocated. The stop path retains an idempotent portrait request for recovery safety. Portrait clipping, target readability, and control feel still need physical-device validation.
 
 ## 8. Storage, failure handling, and performance
 
@@ -177,12 +193,12 @@ Rotation uses `bsp_lvgl_set_landscape()`, backed by the locked esp_lvgl_port 2.9
 | --- | --- | --- |
 | M0 — planning | Project folder and bilingual design outline | Paired docs, valid local links, clear proposed/implemented boundary |
 | M1 — rules | Pure C model and test runner integration | All powers/direction pairs/rolls; green/perfect boundaries in all three difficulties; random zones; slow ascent/descent; 4,000 ms timeout; delayed frames; five shots exactly; retry/reset; duplicate events |
-| M2 — minimal device loop | Portrait boot cover, landscape title/help/play/summary, six targets, power bar and ball | Device top points right; UP/DOWN traverse the target ring; upper/lower cells and text stay clear; entry press is consumed; PRESS/CLICK/DOUBLE do not double-count; retry stays landscape; long OK restores portrait from every state |
-| M3 — presentation | Approved pixel cover, pixel sprites, outcome animations, short audio and mute | Results match animations; audio failure stays playable; full-screen and physical-size readability review |
+| M2 — minimal device loop | Portrait cover/title/help/play/summary, six targets, power bar and ball | Device stays upright; UP/DOWN traverse the column-wise target cycle with consistent vertical direction; upper/lower cells and text stay clear; entry press is consumed; PRESS/CLICK/DOUBLE do not double-count; retry stays portrait; long OK returns to the cover from every state |
+| M3 — presentation | Approved pixel cover, red/blue shooter frames, six keeper dives, outcome animations, short audio and mute | Both roles match precomputed results; cue readability and animation timing pass full-screen and physical-size review |
 | M4 — acceptance | Measured device session and validation report | Complete repository gate; 20 sessions without crash; 50 entry/exit cycles with no progressive heap loss after warm-up; timing and frame measurements |
 
 Before firmware delivery run `./tools/validate.sh --static`, `./tools/validate.sh --firmware`, and `./tools/validate.sh` from the repository root with ESP-IDF 5.5.3. Register new game tests in the shared runner; baseline tests alone do not validate the game. Report Build, Host tests, Device tests, and Unverified separately.
 
 ## 10. Decisions to revisit after the first playable build
 
-The implemented baseline is shooting first; prompted landscape play; a clockwise/counterclockwise six-target ring; timing-based power; a six-target keeper with calibrated 90% / 65% / 25% average goal rates; five-shot challenge; neutral pixel art; bilingual UI; persistent language; and RAM-only scores. Playtests should determine whether cycling the ring is comfortable, whether upper/lower cells and Chinese remain legible on the physical display, and whether 20 FPS feels responsive. Then decide whether goalkeeper mode, alternating shootouts, or saved records is the next priority.
+The implemented baseline now includes separate Shoot and Keep challenges; upright portrait play; a reversible column-wise six-target cycle starting at top-center; timing-based action; five-attempt summaries; neutral pixel art; bilingual UI; persistent language; and RAM-only scores. Shooting retains calibrated 90% / 65% / 25% average goal rates. Goalkeeper mode adds truthful difficulty-timed cues and the exact/same-column save table above. Playtests should determine whether the six blue-shooter cues are readable at native size, whether the six keeper poses and timing feel fair, whether upper/lower cells and Chinese remain legible, and whether 20 FPS feels responsive. Then decide whether alternating shootouts or saved records is the next priority.

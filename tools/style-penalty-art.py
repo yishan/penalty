@@ -12,6 +12,7 @@ GAMEPLAY = ART / "gameplay-v2"
 FONT = ROOT / "managed_components/lvgl__lvgl/scripts/built_in_font/SourceHanSansSC-Normal.otf"
 CREAM = (247, 239, 205, 255)
 SHADOW = (7, 32, 34, 255)
+COVER_GREEN = (9, 58, 32, 255)
 
 
 def is_grass(pixel: tuple[int, int, int, int]) -> bool:
@@ -68,23 +69,29 @@ def draw_chinese_mark(image: Image.Image, y: int, font_size: int,
     image.paste(CREAM, (0, 0, image.width, image.height), mask)
 
 
+def draw_start_panel(image: Image.Image) -> None:
+    scale = image.width / 240
+    x0, y0, x1, y1 = (round(value * scale) for value in (40, 263, 199, 296))
+    line = max(2, round(2 * scale))
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((x0, y0, x1, y1), fill=COVER_GREEN, outline=CREAM, width=line)
+
+
 def style_cover() -> None:
     base = Image.open(ART / "cover-source-v1.0.png").convert("RGBA")
     horizontal_grass(base, 500, 1051, 82, (27, 116, 49), (42, 146, 59))
     black_kit(base, (420, 360, 665, 595))
 
-    # Reflow the existing rotation diagram and instruction within the same footer.
+    # Replace the old rotation diagram with a portrait-native start prompt.
     original = base.copy()
     for y in range(1050, base.height):
         color = original.getpixel((45, y))
         ImageDraw.Draw(base).line((0, y, base.width, y), fill=color)
-    icons = original.crop((249, 1059, 837, 1236)).resize((470, 113), Image.Resampling.NEAREST)
-    base.paste(icons, (308, 1140))
-    instructions = original.crop((190, 1244, 905, 1416))
-    base.paste(instructions, (190, 1267))
     draw_chinese_mark(base, 1029, 82, 5)
+    draw_start_panel(base)
     base.convert("RGB").save(ART / "cover-source.png")
     native = base.resize((240, 320), Image.Resampling.NEAREST)
+    draw_start_panel(native)
     native.convert("RGB").save(ART / "cover-240x320.png")
     native.crop((56, 231, 184, 251)).save(ART / "cover-tagline-128x20.png")
 
@@ -93,8 +100,10 @@ def style_background() -> None:
     image = Image.open(GAMEPLAY / "background-source-v1.0.png").convert("RGBA")
     horizontal_grass(image, 430, 827, 73, (22, 102, 48), (37, 137, 58))
     image.convert("RGB").save(GAMEPLAY / "background-source.png")
-    image.resize((320, 240), Image.Resampling.NEAREST).convert("RGB").save(
-        GAMEPLAY / "background-320x240.png")
+    landscape = image.resize((320, 240), Image.Resampling.NEAREST).convert("RGB")
+    landscape.save(GAMEPLAY / "background-320x240.png")
+    # Preserve the goal centre and native pixel scale for the 240 px portrait viewport.
+    landscape.crop((40, 0, 280, 240)).save(GAMEPLAY / "background-240x240.png")
 
 
 def style_keeper() -> None:

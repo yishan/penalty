@@ -36,16 +36,17 @@ static void aim(penalty_model_t *m, uint64_t now) {
     unsigned perfect = 30 + start + random_below(m, width - 1);
     unsigned roll = random_below(m, 100);
     m->current = (penalty_shot_t){
-        .direction = PENALTY_BOTTOM_CENTER,
-        .keeper = keeper,
+        .player_target = PENALTY_TOP_CENTER,
+        .opponent_target = keeper,
         .green_low = 30 + start, .green_high = 30 + start + width - 1,
         .perfect_low = perfect, .outcome_roll = roll,
     };
     change_state(m, PENALTY_AIM, now);
 }
 
-static void new_session(penalty_model_t *m, uint64_t now) {
-    m->completed = m->goals = m->perfect = m->selection = 0;
+static void new_session(penalty_model_t *m, penalty_mode_t mode, uint64_t now) {
+    m->completed = m->goals = m->saves = m->perfect = m->selection = 0;
+    m->mode = mode;
     memset(m->shots, 0, sizeof(m->shots));
     aim(m, now);
 }
@@ -79,6 +80,19 @@ uint8_t penalty_target_row(penalty_direction_t target) {
     return (unsigned)target < PENALTY_TARGET_COUNT && target >= PENALTY_BOTTOM_RIGHT ? 1 : 0;
 }
 
+static penalty_direction_t move_target(penalty_direction_t target, int step) {
+    static const penalty_direction_t down[PENALTY_TARGET_COUNT] = {
+        PENALTY_BOTTOM_LEFT, PENALTY_BOTTOM_CENTER, PENALTY_BOTTOM_RIGHT,
+        PENALTY_TOP_CENTER, PENALTY_TOP_LEFT, PENALTY_TOP_RIGHT,
+    };
+    static const penalty_direction_t up[PENALTY_TARGET_COUNT] = {
+        PENALTY_BOTTOM_CENTER, PENALTY_BOTTOM_RIGHT, PENALTY_BOTTOM_LEFT,
+        PENALTY_TOP_RIGHT, PENALTY_TOP_CENTER, PENALTY_TOP_LEFT,
+    };
+    if ((unsigned)target >= PENALTY_TARGET_COUNT) return PENALTY_TOP_CENTER;
+    return step > 0 ? down[target] : up[target];
+}
+
 static uint8_t goal_chance(const penalty_shot_t *s) {
     bool exact = s->direction == s->keeper;
     bool same_column = penalty_target_column(s->direction) == penalty_target_column(s->keeper);
@@ -100,34 +114,81 @@ penalty_outcome_t penalty_judge(const penalty_shot_t *s) {
     return goal ? PENALTY_GOAL : PENALTY_SAVE;
 }
 
+static uint8_t save_chance(const penalty_shot_t *s) {
+    bool exact = s->player_target == s->opponent_target;
+    bool same_column = penalty_target_column(s->player_target) ==
+                       penalty_target_column(s->opponent_target);
+    bool perfect = s->timing_value >= s->perfect_low &&
+                   s->timing_value <= s->perfect_low + 1;
+    bool green = s->timing_value >= s->green_low &&
+                 s->timing_value <= s->green_high;
+    if (!same_column) return 0;
+    if (perfect) return exact ? 90 : 35;
+    if (green) return exact ? 65 : 20;
+    return exact ? 25 : 5;
+}
+
+penalty_outcome_t penalty_judge_keeper(const penalty_shot_t *s) {
+    if (s->timing_value < 30) return PENALTY_KEEPER_EARLY;
+    if (s->timing_value > 90) return PENALTY_KEEPER_LATE;
+    if (penalty_target_column(s->player_target) !=
+        penalty_target_column(s->opponent_target))
+        return PENALTY_KEEPER_WRONG_WAY;
+    if (s->outcome_roll >= save_chance(s)) return PENALTY_KEEPER_READ_MISS;
+    return s->player_target == s->opponent_target
+        ? PENALTY_KEEPER_CATCH : PENALTY_KEEPER_PARRY;
+}
+
+uint16_t penalty_keeper_cue_ms(penalty_difficulty_t difficulty) {
+    static const uint16_t durations[] = {900, 600, 350};
+    return (unsigned)difficulty < 3 ? durations[difficulty] : durations[0];
+}
+
+bool penalty_keeper_cue_visible(const penalty_model_t *m, uint64_t now) {
+    if (!m || m->mode != PENALTY_MODE_KEEPER || m->state != PENALTY_AIM ||
+        now < m->since_ms) return false;
+    return now - m->since_ms < penalty_keeper_cue_ms(m->difficulty);
+}
+
 bool penalty_is_goal(penalty_outcome_t outcome) {
     return outcome == PENALTY_GOAL || outcome == PENALTY_PERFECT || outcome == PENALTY_GREEN_GOAL;
+}
+
+bool penalty_is_save(penalty_outcome_t outcome) {
+    return outcome == PENALTY_KEEPER_CATCH || outcome == PENALTY_KEEPER_PARRY;
 }
 
 const char *penalty_outcome_text(penalty_outcome_t outcome) {
     static const char *const names[] = {
         "GOAL!", "PERFECT!", "SAVE", "SAVE - WEAK", "MISS - HIGH", "MISS - TIME",
-        "GOOD SHOT!", "GREEN - SAVE", "PERFECT - SAVE"
+        "GOOD SHOT!", "GREEN - SAVE", "PERFECT - SAVE",
+        "CAUGHT!", "PARRIED!", "WRONG WAY", "READ IT - MISSED", "TOO EARLY", "TOO LATE"
     };
     return (unsigned)outcome < sizeof(names) / sizeof(names[0]) ? names[outcome] : "";
 }
 
 void penalty_model_init(penalty_model_t *m, uint32_t seed, uint64_t now) {
-    *m = (penalty_model_t){ .random = seed ? seed : 1, .last_input_ms = now };
-    change_state(m, PENALTY_ORIENT, now);
+    *m = (penalty_model_t){
+        .random = seed ? seed : 1,
+        .last_input_ms = now,
+        .mode = PENALTY_MODE_SHOOTER,
+        .language = PENALTY_DEFAULT_LANGUAGE,
+    };
+    change_state(m, PENALTY_COVER, now);
 }
 
 void penalty_model_set_language(penalty_model_t *m, penalty_language_t language) {
     m->language = (unsigned)language < PENALTY_LANGUAGE_COUNT
-        ? language : PENALTY_LANGUAGE_EN;
+        ? language : PENALTY_DEFAULT_LANGUAGE;
 }
 
 static void settle(penalty_model_t *m, uint64_t now) {
     if (m->completed >= PENALTY_SHOTS) return;
     m->shots[m->completed++] = m->current;
-    m->goals += penalty_is_goal(m->current.outcome);
-    m->perfect += m->current.outcome == PENALTY_PERFECT ||
-                  m->current.outcome == PENALTY_PERFECT_SAVE;
+    if (m->mode == PENALTY_MODE_KEEPER) m->saves += penalty_is_save(m->current.outcome);
+    else m->goals += penalty_is_goal(m->current.outcome);
+    m->perfect += m->current.timing_value >= m->current.perfect_low &&
+                  m->current.timing_value <= m->current.perfect_low + 1;
     change_state(m, PENALTY_RESULT, now);
 }
 
@@ -138,7 +199,8 @@ void penalty_model_tick(penalty_model_t *m, uint64_t now) {
     case PENALTY_CHARGE:
         m->current.power = penalty_power_at(&m->current, elapsed);
         if (elapsed >= PENALTY_TIMEOUT_MS) {
-            m->current.outcome = PENALTY_TIMEOUT;
+            m->current.outcome = m->mode == PENALTY_MODE_KEEPER
+                ? PENALTY_KEEPER_LATE : PENALTY_TIMEOUT;
             settle(m, now);
         }
         break;
@@ -168,17 +230,18 @@ void penalty_model_input(penalty_model_t *m, penalty_input_t input, uint64_t at)
     penalty_model_tick(m, at);
     /* A press during a transition cannot operate the newly appearing page. */
     if (before != m->state) return;
-    int step = input == PENALTY_INPUT_LEFT ? -1 : input == PENALTY_INPUT_RIGHT ? 1 : 0;
+    int step = input == PENALTY_INPUT_UP ? -1 : input == PENALTY_INPUT_DOWN ? 1 : 0;
     switch (m->state) {
-    case PENALTY_ORIENT:
+    case PENALTY_COVER:
         if (input == PENALTY_INPUT_OK) change_state(m, PENALTY_TITLE, at);
         break;
     case PENALTY_TITLE: {
         int selection = (int)m->selection + step;
-        if (selection >= 0 && selection <= 2) m->selection = (uint8_t)selection;
+        if (selection >= 0 && selection <= 3) m->selection = (uint8_t)selection;
         if (input != PENALTY_INPUT_OK) break;
-        if (m->selection == 0) new_session(m, at);
-        else if (m->selection == 1) {
+        if (m->selection == 0) new_session(m, PENALTY_MODE_SHOOTER, at);
+        else if (m->selection == 1) new_session(m, PENALTY_MODE_KEEPER, at);
+        else if (m->selection == 2) {
             m->selection = 0;
             change_state(m, PENALTY_SETTINGS, at);
         } else change_state(m, PENALTY_HELP, at);
@@ -194,7 +257,7 @@ void penalty_model_input(penalty_model_t *m, penalty_input_t input, uint64_t at)
             m->language = m->language == PENALTY_LANGUAGE_EN
                 ? PENALTY_LANGUAGE_ZH_CN : PENALTY_LANGUAGE_EN;
         else {
-            m->selection = 1;
+            m->selection = 2;
             change_state(m, PENALTY_TITLE, at);
         }
         break;
@@ -203,7 +266,7 @@ void penalty_model_input(penalty_model_t *m, penalty_input_t input, uint64_t at)
         int selection = (int)m->selection + step;
         if (selection >= 0 && selection <= 1) m->selection = (uint8_t)selection;
         if (input != PENALTY_INPUT_OK) break;
-        if (m->selection == 0) new_session(m, at);
+        if (m->selection == 0) new_session(m, m->mode, at);
         else {
             m->selection = 0;
             change_state(m, PENALTY_TITLE, at);
@@ -217,12 +280,7 @@ void penalty_model_input(penalty_model_t *m, penalty_input_t input, uint64_t at)
         }
         break;
     case PENALTY_AIM: {
-        if (step) {
-            int direction = (int)m->current.direction + step;
-            if (direction < 0) direction += PENALTY_TARGET_COUNT;
-            if (direction >= PENALTY_TARGET_COUNT) direction -= PENALTY_TARGET_COUNT;
-            m->current.direction = (penalty_direction_t)direction;
-        }
+        if (step) m->current.direction = move_target(m->current.direction, step);
         if (input == PENALTY_INPUT_OK) {
             change_state(m, PENALTY_CHARGE, at);
         }
@@ -230,7 +288,8 @@ void penalty_model_input(penalty_model_t *m, penalty_input_t input, uint64_t at)
     }
     case PENALTY_CHARGE:
         if (input == PENALTY_INPUT_OK) {
-            m->current.outcome = penalty_judge(&m->current);
+            m->current.outcome = m->mode == PENALTY_MODE_KEEPER
+                ? penalty_judge_keeper(&m->current) : penalty_judge(&m->current);
             change_state(m, PENALTY_FLIGHT, at);
         }
         break;
@@ -242,8 +301,8 @@ void penalty_model_resync(penalty_model_t *m, uint64_t now) {
     if (now < m->since_ms) return;
     if (m->state == PENALTY_CHARGE || m->state == PENALTY_AIM) {
         /* Retry the same uncommitted kick, never reroll its hidden decision. */
-        m->current.power = 0;
-        m->current.direction = PENALTY_BOTTOM_CENTER;
+        m->current.timing_value = 0;
+        m->current.player_target = PENALTY_TOP_CENTER;
         change_state(m, PENALTY_AIM, now);
     }
     m->last_input_ms = now;

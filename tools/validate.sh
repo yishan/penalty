@@ -3,14 +3,39 @@ set -euo pipefail
 
 mode="${1:---all}"
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+penalty_version_file="${repo_root}/penalty/VERSION"
 
 usage() {
     echo "Usage: $0 [--all|--static|--firmware]" >&2
 }
 
+read_penalty_version() {
+    local version
+
+    if [[ ! -f "${penalty_version_file}" ]]; then
+        echo "ERROR: missing Penalty version file: ${penalty_version_file}" >&2
+        return 1
+    fi
+    version="$(<"${penalty_version_file}")"
+    if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "ERROR: Penalty version must be MAJOR.MINOR.PATCH, got: ${version}" >&2
+        return 1
+    fi
+    printf '%s' "${version}"
+}
+
+penalty_firmware_name() {
+    local version
+
+    version="$(read_penalty_version)"
+    printf 'FoloToy-AI-Passport-Penalty-v%s-full.bin' "${version}"
+}
+
 run_static_checks() {
     local actionlint_bin
     local test_dir
+
+    echo "Penalty firmware artifact: $(penalty_firmware_name)"
 
     python3 tools/check_repo.py
 
@@ -71,6 +96,7 @@ run_static_checks() {
 }
 
 run_firmware_checks() (
+    local versioned_name
     local validation_build_dir
 
     if ! command -v idf.py >/dev/null 2>&1; then
@@ -91,6 +117,14 @@ run_firmware_checks() (
     install -m 0644 \
         "${validation_build_dir}/FoloToy-AI-Passport-full.bin" \
         "${repo_root}/build/FoloToy-AI-Passport-full.bin"
+    versioned_name="$(penalty_firmware_name)"
+    install -m 0644 \
+        "${validation_build_dir}/FoloToy-AI-Passport-full.bin" \
+        "${repo_root}/build/${versioned_name}"
+    cmp \
+        "${repo_root}/build/FoloToy-AI-Passport-full.bin" \
+        "${repo_root}/build/${versioned_name}"
+    echo "Delivery artifact: build/${versioned_name}"
     echo "Firmware build: PASS"
 )
 

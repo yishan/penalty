@@ -7,7 +7,7 @@ typedef struct {
     penalty_sprite_t striker, keeper;
     int16_t ball_x, ball_y, shadow_y, target_x, target_y;
     uint8_t ball_frame;
-    bool ball_visible, target_visible;
+    bool ball_visible, target_visible, blue_striker;
 } penalty_scene_t;
 
 /* Native background coordinates, independent of LVGL and the device clock.

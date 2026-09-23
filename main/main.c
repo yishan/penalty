@@ -1,4 +1,4 @@
-/* Standalone Penalty shell: portrait cover -> landscape game -> cover. */
+/* Standalone Penalty shell: portrait cover -> portrait game -> cover. */
 #include "bsp_i2c.h"
 #include "bsp_display.h"
 #include "bsp_button.h"

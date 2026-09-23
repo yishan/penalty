@@ -119,7 +119,7 @@ LICENSE                  Repository license
 
 Repository documentation is organized by function area. `authoritative` documents define development or collaboration requirements; `reference` documents provide background or an index.
 
-- [`penalty/`](../penalty/README.md) — landscape penalty-game MVP: design, implementation entry points, and validation/device checklist.
+- [`penalty/`](../penalty/README.md) — portrait penalty-game MVP: design, implementation entry points, and validation/device checklist.
 - [`docs/development/`](development/README.md) — engineering rules and reusable workflows: the `ai-guide.md`, `engineering/`, `ci/`, and `release/` areas. Its README lists them.
 - [`docs/contribution/`](contribution/README.md) — collaboration, documentation, and commit/PR conventions.
 - [`docs/hardware-design/`](hardware-design/README.md) — board facts, constraints, acceptance matrix, and troubleshooting.

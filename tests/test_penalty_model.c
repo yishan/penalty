@@ -13,6 +13,16 @@ static void begin(penalty_model_t *m) {
     assert(m->state == PENALTY_AIM);
 }
 
+static void begin_keeper(penalty_model_t *m) {
+    penalty_model_init(m, 42, 0);
+    penalty_model_input(m, PENALTY_INPUT_OK, 1);
+    assert(m->state == PENALTY_TITLE);
+    penalty_model_input(m, PENALTY_INPUT_DOWN, 2);
+    penalty_model_input(m, PENALTY_INPUT_OK, 3);
+    assert(m->state == PENALTY_AIM);
+    assert(m->mode == PENALTY_MODE_KEEPER);
+}
+
 static uint64_t perfect_time(const penalty_shot_t *s) {
     return s->green_low * 8u + (s->perfect_low - s->green_low) * 40u + 20u;
 }
@@ -79,6 +89,82 @@ static void calibrated_average_goal_rates(void) {
     }
 }
 
+static void goalkeeper_rules(void) {
+    penalty_shot_t shot = {
+        .player_target = PENALTY_TOP_LEFT,
+        .opponent_target = PENALTY_TOP_LEFT,
+        .green_low = 60,
+        .green_high = 75,
+        .perfect_low = 68,
+    };
+    unsigned exact_perfect = 0, exact_green = 0, exact_outside = 0;
+    unsigned column_perfect = 0, column_green = 0, column_outside = 0;
+    unsigned wrong_column = 0;
+    for (unsigned roll = 0; roll < 100; ++roll) {
+        shot.outcome_roll = roll;
+        shot.timing_value = 68;
+        exact_perfect += penalty_is_save(penalty_judge_keeper(&shot));
+        shot.timing_value = 65;
+        exact_green += penalty_is_save(penalty_judge_keeper(&shot));
+        shot.timing_value = 50;
+        exact_outside += penalty_is_save(penalty_judge_keeper(&shot));
+
+        shot.opponent_target = PENALTY_BOTTOM_LEFT;
+        shot.timing_value = 68;
+        column_perfect += penalty_is_save(penalty_judge_keeper(&shot));
+        shot.timing_value = 65;
+        column_green += penalty_is_save(penalty_judge_keeper(&shot));
+        shot.timing_value = 50;
+        column_outside += penalty_is_save(penalty_judge_keeper(&shot));
+
+        shot.opponent_target = PENALTY_TOP_RIGHT;
+        shot.timing_value = 68;
+        wrong_column += penalty_is_save(penalty_judge_keeper(&shot));
+        assert(penalty_judge_keeper(&shot) == PENALTY_KEEPER_WRONG_WAY);
+        shot.opponent_target = PENALTY_TOP_LEFT;
+    }
+    assert(exact_perfect == 90 && exact_green == 65 && exact_outside == 25);
+    assert(column_perfect == 35 && column_green == 20 && column_outside == 5);
+    assert(wrong_column == 0);
+
+    shot.timing_value = 29;
+    assert(penalty_judge_keeper(&shot) == PENALTY_KEEPER_EARLY);
+    shot.timing_value = 91;
+    assert(penalty_judge_keeper(&shot) == PENALTY_KEEPER_LATE);
+}
+
+static void goalkeeper_cue_and_session(void) {
+    penalty_model_t m;
+    begin_keeper(&m);
+    assert(penalty_keeper_cue_ms(PENALTY_EASY) == 900);
+    assert(penalty_keeper_cue_ms(PENALTY_NORMAL) == 600);
+    assert(penalty_keeper_cue_ms(PENALTY_HARD) == 350);
+    assert(penalty_keeper_cue_visible(&m, m.since_ms + 899));
+    assert(!penalty_keeper_cue_visible(&m, m.since_ms + 900));
+    penalty_direction_t locked = m.current.opponent_target;
+    penalty_model_input(&m, PENALTY_INPUT_DOWN, 10);
+    assert(m.current.opponent_target == locked);
+
+    uint64_t t = 100;
+    for (unsigned attempt = 0; attempt < PENALTY_SHOTS; ++attempt) {
+        m.current.player_target = m.current.opponent_target;
+        m.current.outcome_roll = 0;
+        penalty_model_input(&m, PENALTY_INPUT_OK, t);
+        assert(m.state == PENALTY_CHARGE);
+        uint64_t dive = t + perfect_time(&m.current);
+        penalty_model_input(&m, PENALTY_INPUT_OK, dive);
+        assert(m.state == PENALTY_FLIGHT);
+        assert(penalty_is_save(m.current.outcome));
+        penalty_model_tick(&m, dive + PENALTY_FLIGHT_MS);
+        assert(m.saves == attempt + 1);
+        penalty_model_tick(&m, dive + PENALTY_FLIGHT_MS + PENALTY_RESULT_MS);
+        t = dive + PENALTY_FLIGHT_MS + PENALTY_RESULT_MS + 100;
+    }
+    assert(m.state == PENALTY_SUMMARY && m.saves == 5 && m.goals == 0);
+    penalty_model_input(&m, PENALTY_INPUT_OK, t);
+    assert(m.state == PENALTY_AIM && m.mode == PENALTY_MODE_KEEPER && m.saves == 0);
+}
+
 static void meter_windows(void) {
     const unsigned widths[] = {20, 11, 6};
     for (unsigned d = 0; d < 3; ++d) {
@@ -116,23 +202,55 @@ static void meter_windows(void) {
     }
 }
 
+static void target_navigation(void) {
+    static const penalty_direction_t down_path[] = {
+        PENALTY_TOP_CENTER, PENALTY_BOTTOM_CENTER, PENALTY_TOP_LEFT,
+        PENALTY_BOTTOM_LEFT, PENALTY_TOP_RIGHT, PENALTY_BOTTOM_RIGHT,
+        PENALTY_TOP_CENTER,
+    };
+    static const penalty_direction_t up_path[] = {
+        PENALTY_TOP_CENTER, PENALTY_BOTTOM_RIGHT, PENALTY_TOP_RIGHT,
+        PENALTY_BOTTOM_LEFT, PENALTY_TOP_LEFT, PENALTY_BOTTOM_CENTER,
+        PENALTY_TOP_CENTER,
+    };
+    penalty_model_t m;
+    begin(&m);
+    assert(m.current.direction == down_path[0]);
+    uint64_t t = 100;
+    for (unsigned i = 1; i < sizeof(down_path) / sizeof(down_path[0]); ++i) {
+        penalty_model_input(&m, PENALTY_INPUT_DOWN, t++);
+        assert(m.current.direction == down_path[i]);
+    }
+    penalty_model_input(&m, PENALTY_INPUT_UP, t++);
+    assert(m.current.direction == PENALTY_BOTTOM_RIGHT);
+
+    begin(&m);
+    assert(m.current.direction == up_path[0]);
+    t = 100;
+    for (unsigned i = 1; i < sizeof(up_path) / sizeof(up_path[0]); ++i) {
+        penalty_model_input(&m, PENALTY_INPUT_UP, t++);
+        assert(m.current.direction == up_path[i]);
+    }
+    penalty_model_input(&m, PENALTY_INPUT_DOWN, t++);
+    assert(m.current.direction == PENALTY_BOTTOM_CENTER);
+    penalty_model_resync(&m, t);
+    assert(m.current.direction == PENALTY_TOP_CENTER);
+}
+
 static void session(void) {
     penalty_model_t m;
     begin(&m);
     uint64_t t = 100;
     for (unsigned shot = 0; shot < PENALTY_SHOTS; ++shot) {
+        assert(m.current.direction == PENALTY_TOP_CENTER);
+        penalty_model_input(&m, PENALTY_INPUT_DOWN, t++);
         assert(m.current.direction == PENALTY_BOTTOM_CENTER);
-        for (unsigned target = 0; target < PENALTY_TARGET_COUNT; ++target)
-            penalty_model_input(&m, PENALTY_INPUT_RIGHT, t++);
-        assert(m.current.direction == PENALTY_BOTTOM_CENTER);
-        penalty_model_input(&m, PENALTY_INPUT_LEFT, t++);
-        assert(m.current.direction == PENALTY_BOTTOM_RIGHT);
         m.current.outcome_roll = 0;
         penalty_model_input(&m, PENALTY_INPUT_OK, t);
         assert(m.state == PENALTY_CHARGE);
         penalty_direction_t keeper = m.current.keeper;
-        penalty_model_input(&m, PENALTY_INPUT_LEFT, t + 10);
-        assert(m.current.direction == PENALTY_BOTTOM_RIGHT);
+        penalty_model_input(&m, PENALTY_INPUT_UP, t + 10);
+        assert(m.current.direction == PENALTY_BOTTOM_CENTER);
         penalty_model_tick(&m, t + 200); /* rendering doesn't set locked power */
         uint64_t fired = t + perfect_time(&m.current);
         penalty_model_tick(&m, fired + 50); /* queued press uses its source timestamp */
@@ -192,36 +310,39 @@ static void timing_and_recovery(void) {
 static void menus_and_exit(void) {
     penalty_model_t m;
     penalty_model_init(&m, 0, 0);
-    penalty_model_input(&m, PENALTY_INPUT_OK, 1);
-    penalty_model_input(&m, PENALTY_INPUT_RIGHT, 2);
-    penalty_model_input(&m, PENALTY_INPUT_OK, 3);
-    assert(m.state == PENALTY_SETTINGS && m.selection == 0);
-    penalty_model_input(&m, PENALTY_INPUT_OK, 4);
-    assert(m.difficulty == PENALTY_NORMAL && !m.muted);
-    penalty_model_input(&m, PENALTY_INPUT_OK, 5);
-    assert(m.difficulty == PENALTY_HARD);
-    penalty_model_input(&m, PENALTY_INPUT_OK, 6);
-    assert(m.difficulty == PENALTY_EASY);
-    penalty_model_input(&m, PENALTY_INPUT_RIGHT, 7);
-    penalty_model_input(&m, PENALTY_INPUT_OK, 8);
-    assert(m.muted);
-    penalty_model_input(&m, PENALTY_INPUT_RIGHT, 9);
-    penalty_model_input(&m, PENALTY_INPUT_OK, 10);
     assert(m.language == PENALTY_LANGUAGE_ZH_CN);
+    penalty_model_input(&m, PENALTY_INPUT_OK, 1);
+    penalty_model_input(&m, PENALTY_INPUT_DOWN, 2);
+    penalty_model_input(&m, PENALTY_INPUT_DOWN, 3);
+    penalty_model_input(&m, PENALTY_INPUT_OK, 4);
+    assert(m.state == PENALTY_SETTINGS && m.selection == 0);
+    penalty_model_input(&m, PENALTY_INPUT_OK, 5);
+    assert(m.difficulty == PENALTY_NORMAL && !m.muted);
+    penalty_model_input(&m, PENALTY_INPUT_OK, 6);
+    assert(m.difficulty == PENALTY_HARD);
+    penalty_model_input(&m, PENALTY_INPUT_OK, 7);
+    assert(m.difficulty == PENALTY_EASY);
+    penalty_model_input(&m, PENALTY_INPUT_DOWN, 8);
+    penalty_model_input(&m, PENALTY_INPUT_OK, 9);
+    assert(m.muted);
+    penalty_model_input(&m, PENALTY_INPUT_DOWN, 10);
     penalty_model_input(&m, PENALTY_INPUT_OK, 11);
     assert(m.language == PENALTY_LANGUAGE_EN);
+    penalty_model_input(&m, PENALTY_INPUT_OK, 12);
+    assert(m.language == PENALTY_LANGUAGE_ZH_CN);
     penalty_model_set_language(&m, PENALTY_LANGUAGE_ZH_CN);
     assert(m.language == PENALTY_LANGUAGE_ZH_CN);
     penalty_model_set_language(&m, (penalty_language_t)99);
-    assert(m.language == PENALTY_LANGUAGE_EN);
+    assert(m.language == PENALTY_LANGUAGE_ZH_CN);
 
-    penalty_model_input(&m, PENALTY_INPUT_RIGHT, 12);
-    penalty_model_input(&m, PENALTY_INPUT_OK, 13);
-    assert(m.state == PENALTY_TITLE && m.selection == 1);
-    penalty_model_input(&m, PENALTY_INPUT_LEFT, 14);
-    penalty_model_input(&m, PENALTY_INPUT_OK, 15);
-    assert(m.muted && m.language == PENALTY_LANGUAGE_EN && m.state == PENALTY_AIM);
-    for (unsigned s = PENALTY_ORIENT; s <= PENALTY_HELP; ++s) {
+    penalty_model_input(&m, PENALTY_INPUT_DOWN, 13);
+    penalty_model_input(&m, PENALTY_INPUT_OK, 14);
+    assert(m.state == PENALTY_TITLE && m.selection == 2);
+    penalty_model_input(&m, PENALTY_INPUT_UP, 15);
+    penalty_model_input(&m, PENALTY_INPUT_UP, 16);
+    penalty_model_input(&m, PENALTY_INPUT_OK, 17);
+    assert(m.muted && m.language == PENALTY_LANGUAGE_ZH_CN && m.state == PENALTY_AIM);
+    for (unsigned s = PENALTY_COVER; s <= PENALTY_HELP; ++s) {
         m.state = (penalty_state_t)s;
         penalty_model_input(&m, PENALTY_INPUT_EXIT, 100 + s);
         assert(m.state == PENALTY_EXITING);
@@ -257,13 +378,14 @@ static void five_misses(void) {
         t += elapsed + 1600;
     }
     assert(m.state == PENALTY_SUMMARY && m.goals == 0 && m.completed == 5);
-    penalty_model_input(&m, PENALTY_INPUT_RIGHT, t++);
+    penalty_model_input(&m, PENALTY_INPUT_DOWN, t++);
     penalty_model_input(&m, PENALTY_INPUT_OK, t++);
     assert(m.state == PENALTY_TITLE);
-    penalty_model_input(&m, PENALTY_INPUT_RIGHT, t++);
-    penalty_model_input(&m, PENALTY_INPUT_RIGHT, t++);
+    penalty_model_input(&m, PENALTY_INPUT_DOWN, t++);
+    penalty_model_input(&m, PENALTY_INPUT_DOWN, t++);
+    penalty_model_input(&m, PENALTY_INPUT_DOWN, t++);
     penalty_model_input(&m, PENALTY_INPUT_OK, t++);
-    assert(m.state != PENALTY_EXITING); /* Third title item opens instructions. */
+    assert(m.state != PENALTY_EXITING); /* Fourth title item opens instructions. */
     assert(m.state == PENALTY_HELP);
     penalty_model_input(&m, PENALTY_INPUT_OK, t++);
     assert(m.state == PENALTY_TITLE && m.selection == 0);
@@ -309,16 +431,17 @@ static void event_sequences(void) {
         if ((random & 15) == 0) penalty_model_resync(&m, time);
         else if (random & 1) penalty_model_tick(&m, time);
         else penalty_model_input(&m, (penalty_input_t)((random >> 8) % 4), time);
-        unsigned goals = 0, perfect = 0;
+        unsigned goals = 0, saves = 0, perfect = 0;
         assert(m.completed <= 5);
         for (unsigned j = 0; j < m.completed; ++j) {
-            goals += penalty_is_goal(m.shots[j].outcome);
-            perfect += m.shots[j].outcome == PENALTY_PERFECT ||
-                       m.shots[j].outcome == PENALTY_PERFECT_SAVE;
+            if (m.mode == PENALTY_MODE_KEEPER) saves += penalty_is_save(m.shots[j].outcome);
+            else goals += penalty_is_goal(m.shots[j].outcome);
+            perfect += m.shots[j].timing_value >= m.shots[j].perfect_low &&
+                       m.shots[j].timing_value <= m.shots[j].perfect_low + 1;
             assert(m.shots[j].direction < PENALTY_TARGET_COUNT);
             assert(m.shots[j].keeper < PENALTY_TARGET_COUNT);
         }
-        assert(m.goals == goals && m.perfect == perfect);
+        assert(m.goals == goals && m.saves == saves && m.perfect == perfect);
         if (m.state == PENALTY_SUMMARY) assert(m.completed == 5);
     }
 }
@@ -328,9 +451,11 @@ int main(void) {
     penalty_model_init(&menu, 42, 0);
     penalty_model_input(&menu, PENALTY_INPUT_OK, 1);
     for (unsigned i = 2; i <= 4; ++i)
-        penalty_model_input(&menu, PENALTY_INPUT_RIGHT, i);
-    assert(menu.selection == 2); /* PLAY, SETTINGS, HELP */
+        penalty_model_input(&menu, PENALTY_INPUT_DOWN, i);
+    assert(menu.selection == 3); /* SHOOT, KEEP, SETTINGS, HELP */
     boundaries(); calibrated_average_goal_rates(); meter_windows(); generated_zones();
+    goalkeeper_rules(); goalkeeper_cue_and_session();
+    target_navigation();
     session(); timing_and_recovery(); menus_and_exit(); five_misses();
     event_sequences();
     puts("Penalty model: PASS");

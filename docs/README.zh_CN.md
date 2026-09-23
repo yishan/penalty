@@ -117,7 +117,7 @@ LICENSE                  仓库许可证
 
 本仓库文档按功能域组织。`authoritative` 指对开发与协作有约束力的文档；`参考` 指提供背景或索引的文档。
 
-- [`penalty/`](../penalty/README.zh_CN.md) — 横屏点球游戏 MVP：策划、实现入口、验证记录与真机清单。
+- [`penalty/`](../penalty/README.zh_CN.md) — 竖屏点球游戏 MVP：策划、实现入口、验证记录与真机清单。
 - [`docs/development/`](development/README.zh_CN.md) — 工程规则与可复用工作流：`ai-guide.md`、`engineering/`、`ci/`、`release/` 区。其 README 列明它们。
 - [`docs/contribution/`](contribution/README.zh_CN.md) — 协作、文档与提交/PR 约定。
 - [`docs/hardware-design/`](hardware-design/README.zh_CN.md) — 板卡事实、约束、验收矩阵与排障。

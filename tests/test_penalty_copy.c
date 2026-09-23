@@ -60,10 +60,16 @@ static void result_copy_matches_the_outcome(void) {
         {PENALTY_SAVE, "KEEPER SAYS NO."},
         {PENALTY_WEAK, "NEEDS MORE BOOT."},
         {PENALTY_HIGH, "ROW Z HAS THE BALL."},
-        {PENALTY_TIMEOUT, "REF'S CHECKING THE WATCH."},
+        {PENALTY_TIMEOUT, "REF CHECKS THE CLOCK."},
         {PENALTY_GREEN_GOAL, "THAT FOUND THE CORNER."},
         {PENALTY_GREEN_SAVE, "READ LIKE A BOOK."},
         {PENALTY_PERFECT_SAVE, "WHAT A SAVE."},
+        {PENALTY_KEEPER_CATCH, "SAFE HANDS."},
+        {PENALTY_KEEPER_PARRY, "PUSHED IT CLEAR."},
+        {PENALTY_KEEPER_WRONG_WAY, "SENT THE WRONG WAY."},
+        {PENALTY_KEEPER_READ_MISS, "RIGHT READ. JUST MISSED."},
+        {PENALTY_KEEPER_EARLY, "DIVED TOO EARLY."},
+        {PENALTY_KEEPER_LATE, "DIVED TOO LATE."},
     };
     for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
         const char *text = penalty_result_copy(cases[i].outcome, PENALTY_LANGUAGE_EN);
@@ -72,9 +78,19 @@ static void result_copy_matches_the_outcome(void) {
     }
 }
 
+static void goalkeeper_prompts_are_role_specific(void) {
+    penalty_model_t model = view(PENALTY_EASY, 0);
+    model.mode = PENALTY_MODE_KEEPER;
+    assert(strcmp(penalty_pre_shot_copy(&model), "READ THE KICKER.") == 0);
+    model.difficulty = PENALTY_NORMAL;
+    model.completed = PENALTY_SHOTS - 1;
+    assert(strcmp(penalty_pre_shot_copy(&model), "LAST SAVE. STAY BIG.") == 0);
+}
+
 int main(void) {
     teaching_is_limited_to_easy_or_first_kick();
     interactive_copy_is_stable_short_and_non_repeating();
     result_copy_matches_the_outcome();
+    goalkeeper_prompts_are_role_specific();
     return 0;
 }

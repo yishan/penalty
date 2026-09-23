@@ -36,7 +36,7 @@
 
 - `images/penalty/cover-concept.png`：已确认的原始竖屏视觉稿，含绘制的电池图标。
 - `images/penalty/cover-source-v1.0.png`：保留的美术刷新前源图，已去除固定电池图标。
-- `images/penalty/cover-source.png`：当前源图，草坪改为横向明暗带，门将改为黑色球衣，并在旋转图示上方加入精确中文标识“点球决胜”。竖屏封面刻意不叠加电量；实时电量仅在进入横屏游戏后显示。
+- `images/penalty/cover-source.png`：当前源图，草坪改为横向明暗带，门将改为黑色球衣，保留精确中文标识“点球决胜”，并用空白的竖屏开始面板替换旧旋转图示。运行时按当前语言在面板内绘字，使中英文共用同一套对齐。封面刻意不叠加电量；实时电量从标题页开始显示。
 - `images/penalty/cover-240x320.png`：最近邻缩放的 240 x 320 参考导出图。
 - `images/penalty/cover-tagline-128x20.png`：美术契约使用的精确封面字样区域；米白粗字、深色描边和错位阴影呼应 `PENALTY` 风格。
 - `images/penalty/cover_rgb565.c`：生成的原生 RGB565 `const` 像素数组，在只读 Flash 中占 153,600 字节。LVGL 沿用 4,800 像素绘制缓冲，不新增整屏 RAM 解码、透明图层或运行时缩放。
@@ -57,9 +57,9 @@
 
 ## Penalty 已拆分游戏图层
 
-[gameplay-v2 清单](images/penalty/gameplay-v2/manifest.json)记录纯背景、射手三帧、门将四帧、足球六种尺寸，以及原始内置 imagegen 提示词和已校准动画锚点。确定性的 v1.1 风格处理把草坪改为横向明暗带、门将球衣改为黑／深灰色，同时保留球门、场地线、透明精灵几何、手套、肤色及锚点；`*-v1.0.png` 文件保留刷新前源图。这些不是实机截图。
+[gameplay-v2 清单](images/penalty/gameplay-v2/manifest.json)记录纯背景、红衣射手五帧、蓝衣 AI 射手九帧、黑衣门将七帧、足球六种尺寸，以及内置 imagegen 素材说明和已校准动画锚点。蓝衣射手包含准备／触球／随摆及六个真实方向提示，门将包含准备及六格扑救。确定性风格处理保持横向草坪明暗带和黑／深灰门将球衣。`background-240x240.png` 是竖屏游戏居中的原生裁图，保留的 320 × 240 文件为确定性来源。这些是生成的游戏精灵，不是实机截图。
 
-当前渲染接入不改变射门规则。先执行 `tools/style-penalty-art.py`，再运行 `tools/convert-penalty-gameplay.py`；转换器可复现生成 `gameplay_assets.c/.h`：264,180 字节像素存于只读 Flash，背景为原尺寸 RGB565，角色为分平面的 RGB565A8。Alpha 0–1 归零，254–255 归为 255，其余边缘透明度保留。转换器加 `--check` 可校验生成文件，Pillow 仅为离线转换依赖。没有新增 PNG 解码、运行时缩放、整屏 RAM 缓冲或每帧图片对象。校准后的脚／手套锚点、实时飞行、测试与待完成的真机验收见[接入设计](../penalty/docs/plans/2026-09-15-pixel-art-integration-design.zh_CN.md)。旧固件及社区提交副本保留。
+当前竖屏渲染同时接入“射门”和“守门”。先运行 `python3 tools/prepare-penalty-action-art.py` 复现新增动作单元，再依次执行 `tools/style-penalty-art.py` 和 `tools/convert-penalty-gameplay.py`；转换器生成 `gameplay_assets.c/.h`，共 509,556 字节像素存于只读 Flash。240 × 240 背景为原生 RGB565，角色为分平面的 RGB565A8；三个脚本均支持 `--check`。Alpha 0–1 归零，254–255 归为 255，其余边缘透明度保留。Pillow 仅为离线转换依赖；没有新增 PNG 解码、运行时缩放、整屏 RAM 缓冲或每帧图片对象。提示与接触点行为见[守门模式设计](../penalty/docs/plans/2026-09-23-goalkeeper-mode-design.zh_CN.md)。旧固件及社区提交副本保留。
 
 ## 音乐与音效（music）
 
