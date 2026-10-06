@@ -4,6 +4,10 @@
 
 # Community submission
 
+## v2.0.0 candidate — prepared, not uploaded (2026-10-06)
+
+The [v2.0.0 release notes](releases/v2.0.0.md) and [versioned bilingual listing](../publishing/submission-v2.0.0.json) describe the **multiplayer public beta**. The normal merged firmware and three actual-UI desktop captures are packaged under `build/community/penalty-v2.0.0/`; hashes are recorded in `SHA256SUMS.txt`. Full-image SHA-256: `6dd9489d301cb73e61e65f76e78f5deb680e23315c17732246b7d69b5b2a42ee`. The embedded application version is `2.0.0`; development fault injection is disabled. This candidate has not been submitted. The receipt below is historical, not a fresh server-status check. Existing remote repositories do not contain this unpublished game revision, so the source URL remains empty.
+
 Prepared on 2026-09-15 for the official FoloToy AI Passport community. Local game version: **v0.3**. Category: **games**. Submission is authorized, but preparation alone does not mean public availability.
 
 ## Prepared cover updates — not uploaded

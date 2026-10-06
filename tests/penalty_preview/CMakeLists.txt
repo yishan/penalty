@@ -19,3 +19,11 @@ target_include_directories(penalty_preview PRIVATE ../../main ../../components/b
                            ../../assets/fonts/penalty)
 target_compile_options(penalty_preview PRIVATE -Wall -Wextra -Werror -UNDEBUG)
 target_link_libraries(penalty_preview PRIVATE lvgl_host m)
+get_target_property(PREVIEW_SOURCES penalty_preview SOURCES)
+list(REMOVE_ITEM PREVIEW_SOURCES preview.c)
+add_executable(penalty_mp_preview mp_preview.c ${PREVIEW_SOURCES}
+    ../../main/penalty_multiplayer_core.c ../../main/penalty_duel_model.c)
+target_include_directories(penalty_mp_preview PRIVATE ../../main ../../components/bsp/src
+                           ../../assets/fonts/penalty)
+target_compile_options(penalty_mp_preview PRIVATE -Wall -Wextra -Werror -UNDEBUG)
+target_link_libraries(penalty_mp_preview PRIVATE lvgl_host m)

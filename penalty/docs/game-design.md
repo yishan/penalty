@@ -4,11 +4,13 @@
 
 # Penalty — Game Design Outline
 
-Version: 1.4 · Date: 2026-09-23 · Stage: portrait shooting and standalone goalkeeper challenges integrated locally. [Validation status](validation.md) separates host, firmware, and device evidence. The [localization design](localization.md) records the language menu, persistence, font subset and overflow policy.
+Version: 1.5 · Date: 2026-09-23 · Stage: shootout plus portrait shooting and goalkeeper practices integrated locally. [Validation status](validation.md) separates host, firmware, and device evidence. The [localization design](localization.md) records the language menu, persistence, font subset and overflow policy.
+
+Current development increment: the [BLE v2 duel design](plans/2026-09-24-ble-duel-v2-design.md) extends Shootout with Single Player / Create Lobby / Join Lobby / Back. All rules below describe the retained v1.5 single-player modes unless explicitly identified as PvP. PvP has simultaneous blind choices, creator-triggered random coin toss, an authenticated four-digit lobby/six-digit security comparison flow, and 30-second recovery followed by no-contest termination. It has no AI shooter cue. M5 covers bilingual rendering, single-player/Launcher compatibility and bounded resources; M6 device/security/endurance acceptance is separate. The unchanged `penalty/VERSION` value is a compatibility filename, not proof of a published v2 release.
 
 ## 1. Concept and player goal
 
-An offline pixel-art penalty game for short breaks with AI Passport. The player chooses either a shooting challenge or a standalone goalkeeper challenge, selects one of six targets with three buttons, times the action, and receives a clear result. The intended session lasts about 30–90 seconds; this is a playtest target, not a time limit.
+An offline pixel-art penalty game for short breaks with AI Passport. The player can play a full alternating shootout or choose standalone shooting and goalkeeper practices, selects one of six targets with three buttons, times the action, and receives a clear result. The intended session lasts about 30–90 seconds; this is a playtest target, not a time limit.
 
 The core tension is choosing a direction while stopping the power marker in its sweet spot. A perfect kick should visibly reward timing instead of making every result a random guess.
 
@@ -20,14 +22,14 @@ The brief builds on the penalty/Pong feasibility discussion in Codex task `01a0a
 | --- | --- | --- |
 | MVP: shooting challenge | Offline single player; six upper/lower targets; two-press power meter; six-target AI keeper; five shots; result summary; replay; mute; short effects | A complete five-shot session runs on device with clear input and outcomes |
 | v1.4: goalkeeper challenge | Five AI shots; truthful blue-shooter cues; player selects the black keeper's dive and confirms it within a visible timing window | Six cues, timing bands, outcomes, animation, audio and bilingual UI pass host/render checks |
-| Later: alternating shootout | Player shoots and keeps against AI; five paired rounds; early victory and sudden death | Turn order and winner rules pass host tests |
+| [v1.5: penalty shootout](plans/2026-09-23-shootout-mode-design.md) | Player shoots and keeps against AI; coin-toss order, five paired rounds, early victory, and uncapped paired sudden death | Pure-C rules, bounded memory, bilingual LVGL flow and desktop rendering pass locally; firmware and device acceptance remain |
 | v0.4: difficulty | Easy / Normal / Hard; random green zones; a two-value guaranteed-goal line; slow green meter | Automated rule/render checks plus pending device timing acceptance |
 | v1.0: six-target rules | Two rows of three targets; ring navigation; six-target keeper; 90% / 65% / 25% calibrated average goal rates | Exhaustive model probabilities and actual LVGL target/trajectory checks pass |
 | Optional | Local personal best, extra art | Added only after input, memory, and frame timing are measured |
 
 MVP has no opponent score, win/loss, or sudden death: it is a five-shot challenge scored 0–5. A 3/5 result ends the session; it is not a draw. In alternating shootouts, each side gets up to five kicks; stop when the trailing side cannot catch up. If tied after five kicks each, play one kick per side until scores differ after a complete pair. A first kick alone cannot decide a sudden-death pair.
 
-Not included: free-roaming football, 3D physics, networking, leaderboards, multiplayer, voice control, background music, and hardware changes.
+Not included: free-roaming football, 3D physics, Internet/cloud play, leaderboards, voice control, background music, and hardware changes. Local two-player BLE is included only in the experimental v2 increment linked above; it does not change the offline single-player rules.
 
 ## 3. Hardware and design boundaries
 
@@ -46,18 +48,26 @@ Hardware/API references: [pin definitions](../../components/bsp/include/bsp_pins
 
 ### Portrait entry
 
-On power-on, show the approved 240 × 320 pixel cover: PENALTY title, the matching cream/dark-shadow Chinese game mark, player facing the goal, horizontal grass bands, a black-kit keeper, and `PRESS OK TO START`. The cover deliberately has no battery overlay. The device stays upright when confirmation opens the 240 × 320 title screen; live battery text appears in the title and later game screens. The title page shows the field and menu without the former English/Chinese slogan.
+On power-on, show the approved 240 × 320 pixel cover: PENALTY title, the matching cream/dark-shadow Chinese game mark, player facing the goal, horizontal grass bands, a black-kit keeper, and an unframed start prompt (`PRESS OK` in English; confirmation-key wording in Chinese). The existing Chinese pixel mark is enlarged to 307/256 (about 120%) and moved down 6 pixels to increase the gap above it. A read-only crop of the original image (56,232), size 128 × 19, is drawn at (43,238), retaining its original style and 480-byte source stride. The old mark is masked with the existing grass-row colors; source art is unchanged, with no new image buffer or widget. Prompt text uses the same muted green `0xA2BC9E` as the long-confirm return hint. The existing label's `0x093A20` background masks the artwork's old border at x=40, y=263, width=159, height=33. All pixels outside the old/new mark and prompt regions remain unchanged. Both languages retain the prompt's 14-pixel Chinese-subset font and baseline position. The cover deliberately has no battery overlay. The device stays upright when confirmation opens the 240 × 320 title screen; live battery text appears in the title and later game screens. The title page shows the field and menu without the former English/Chinese slogan.
 
 Consume the entry OK event so it cannot also start the game. Keep the title, settings, play screen, results, retry flow, and cover in portrait. Retry does not repeat the prompt. On exit, stop the game, reset the input epoch, and return directly to the portrait cover. The stop path may idempotently request portrait as a safety action, but gameplay never enters landscape. There is no hardware-demo launcher in the normal flow.
 
+The cover consumes physical PRESS while waiting to distinguish a short click from a long hold. Short OK opens the title with the confirmed CLICK timestamp, not the earlier physical PRESS timestamp; normal button classification must not trip the game's 100 ms stale-input guard or display a retry prompt. Gameplay still uses the original PRESS timestamp for timing. Long OK on the cover remains consumed without starting a game or returning to Launcher.
+
 ### Button mapping
 
-UP and DOWN scan the selected target vertically; OK confirms. Each attempt starts at top-center. DOWN cycles `top-center → bottom-center → top-left → bottom-left → top-right → bottom-right → top-center`; UP follows the exact reverse. The two cells in a column therefore follow the physical vertical direction before selection advances to the next column. The title menu contains Shoot, Keep, Settings and Help. Settings contains Difficulty, Sound, Language and Back. DOWN selects the next menu option and UP the previous one.
+UP and DOWN scan the selected target vertically; OK confirms. Each attempt starts at top-center. DOWN cycles `top-center → bottom-center → top-left → bottom-left → top-right → bottom-right → top-center`; UP follows the exact reverse. The two cells in a column therefore follow the physical vertical direction before selection advances to the next column. The title menu contains Shootout, Shoot Practice, Keeper Practice, Settings and Help. Settings contains Difficulty, Sound, Language and Back. In both menus, DOWN selects the next option and wraps from last to first; UP selects the previous option and wraps from first to last. Moving selection does not change a setting until OK is pressed.
+
+The title's pitch viewport is 90 pixels tall. Its decorative title header and navigation footer are hidden in both languages; the battery and long-OK exit hint remain. The cover also hides the decorative header. The five menu rows start at y=116 with 32-pixel row pitch. The four settings rows start at y=84 with 40-pixel row pitch. The Shootout submenu (Single vs AI / Create / Join / Back) and up to four discovered lobbies also start at y=84 with 40-pixel row pitch, without a trailing empty row. Help has three instruction lines at y=84 with 32-pixel row pitch and no probability-percentage line; this removes explanatory copy, not the timing bands or game probabilities. Existing 14-pixel fonts remain. The selected title/settings/submenu/lobby item now uses `>> item <<`, while unselected items have no marker; retry/title summary choices use the same style with four separating spaces. Line spacing compensates for each language font's actual line height. No larger LVGL pool or draw buffer is required. Cover prompt color/padding/background and menu spacing reset before other views to prevent inherited styles or clipping. Settings/help/multiplayer headers and operation hints remain visible.
+
+The match header counts paired rounds, not individual kicks: kicks 1/2 display round 1, kicks 3/4 display round 2. Both kicks' aim, charge, waiting, animation and result retain their current pair number. AI regular-play result screens do not increment until the next handoff; AI sudden-death pairs retain their existing separately labeled round sequence. BLE headers derive paired rounds from the synchronized one-based kick ID without changing that protocol ID or settlement rules. Scores remain local-player first. Practice modes retain their five-attempt counters.
 
 | Screen/state | UP / DOWN | Short OK | Long OK |
 | --- | --- | --- | --- |
 | Portrait cover | No action | Open portrait menu | Reset to portrait cover |
-| Title | Select Shoot, Keep, Settings, or Help | Activate selected item | Return to portrait cover |
+| Title | Select Shootout, Shoot Practice, Keeper Practice, Settings, or Help | Activate selected item | Return to portrait cover |
+| Coin toss / result | No action | Toss the coin, then confirm the locked first role | Abandon match and return to cover |
+| Role handoff | No action | Start the announced shooting or keeping turn | Abandon match and return to cover |
 | Settings | Select Difficulty, Sound, Language, or Back | Cycle/toggle selected setting, or return | Return to portrait cover |
 | Help | No action | Return to portrait menu | Return to portrait cover |
 | Aim | Scan the six kick/dive targets by column in either direction | Lock target and start timing meter | Exit current session |
@@ -129,6 +139,10 @@ Values 0–29 are `TOO EARLY`; values 91–100 and the meter timeout are `TOO LA
 
 Runtime art uses five red-shooter frames for shooting mode, nine blue-shooter frames for goalkeeper mode (ready, contact, follow-through, six direction cues), and seven black-keeper frames (ready plus all six dive cells). These are real transparent sprites in Flash, not full-screen frame sequences. The animation visualizes the precomputed decision; collision does not change the result.
 
+The red/blue sources both use 88 × 88 canvases, but their ready-pose visible bodies are 34 × 65 and 43 × 78 pixels respectively (alpha ≥ 128). The renderer therefore draws every blue pose at 213/256 (83.2%) with nearest-neighbor sampling; red stays at native size. The pivot is the stationary ball at scene coordinate (131,147), or sprite-local (83,52). This aligns the ready heights/ground line without changing ball trajectories, timing, cue mapping or settlement. The source images are unchanged, and the scaled canvas stays inside the existing 88 × 88 invalidation region.
+
+In PvP, kit color identifies the room participant, not the local control role: the creator always shoots in red and the joiner always shoots in blue. Both devices derive the current shooter's kit from the synchronized match identity and show the same kit/action frames; the keeper always uses black art. Coin order is unchanged, so the joiner may shoot first in blue. Aim, charge and locked waiting retain the matching ready pose without revealing a directional cue; contact/follow-through begin only with the shared animation. Color-only changes invalidate the striker region even when the pose/position is unchanged. Single-player red/blue role mapping remains unchanged.
+
 ## 6. Screens and state flow
 
 ```text
@@ -152,7 +166,7 @@ Implemented 240 × 320 portrait layout:
 | Power/result | y=205–226 | 192-pixel meter, best band, marker or result text |
 | Footer | y=235–319 | Target/action text, interaction copy, long-OK hint |
 
-Keep critical labels and controls clear of the rounded corners, normally within x=16–223. The pitch uses a native 240 × 240 center crop of the approved stadium; the active field clips it at y=18–182. Three goal columns remain centered at x=70/120/170. No runtime image scaling or full-screen game buffer is used.
+Keep critical labels and controls clear of the rounded corners, normally within x=16–223. The pitch uses a native 240 × 240 center crop of the approved stadium; the active field clips it at y=18–182. Three goal columns remain centered at x=70/120/170. Only blue-shooter sprites use the bounded runtime scaling above; all other art remains native size. No full-screen game buffer is used. LVGL's pinned RGB565A8 software transform uses strips bounded by four display rows (at most 1,920 bytes at 240-pixel RGB565 width), not a full decoded sprite or screen. The existing LVGL pool and display buffer are unchanged.
 
 Look: dark green pitch, white goal lines, bright ball, original neutral player sprites, readable outlines. Distinguish zones and outcomes by labels/shapes as well as color. Keep the target visible through charge. Use scaling/position to suggest depth without a 3D renderer; avoid camera motion, full-screen effects, real club branding, or player likenesses.
 
@@ -174,7 +188,9 @@ The model does not include ESP-IDF or LVGL headers. Its session data includes mo
 
 Use one owner for model changes. Button callbacks enqueue bounded events and return. UI access outside the LVGL task holds `bsp_lvgl_lock()`; audio and language-preference NVS writes run outside that lock in workers. Teardown stops timers, rejects stale session events, flushes the pending language preference, stops/joins workers, and only then deletes UI objects. If a worker cannot stop, retain the view until safe teardown is possible.
 
-The standalone shell in `main/main.c` boots directly into Penalty. Baseline demo source files remain as references but are not linked into this game. Returning to the cover stops the timer and service worker, recreates the screen, advances the input epoch, and restarts services. The approved cover uses a 153,600-byte const RGB565 array in Flash and the gameplay background uses a 115,200-byte const RGB565 array, both with no full-image RAM decode. Source and conversion recipes are recorded in [Assets](../../assets/README.md). No partitions or pins change.
+The standalone shell in `main/main.c` boots directly into Penalty. Baseline demo source files remain as references but are not linked into this game. Returning to the cover stops the timer and service worker, recreates the screen, advances the input epoch, and restarts services. The approved cover uses a 153,600-byte const RGB565 array in Flash and the gameplay background uses a 115,200-byte const RGB565 array, both with no full-image RAM decode. The gameplay asset total is 404,592 pixel bytes after trimming only the red-shooter/keeper transparent borders; generated offsets preserve their canvas anchors. Blue canvases retain the existing scaling samples. Source and conversion recipes are recorded in [Assets](../../assets/README.md). No partitions or pins change.
+
+The firmware uses size optimization (`-Os`) and omits LVGL's default/simple/mono themes because Penalty supplies its own styles. Chinese fonts retain their 4-bpp glyphs with lossless RLE decoding. Keep assertions, diagnostic logs, BLE security, recovery, audio and the 24 KiB LVGL pool enabled; do not trade these for a smaller image. Firmware/host gates and physical acceptance remain separate.
 
 The game keeps the BSP's portrait baseline and does not request a quarter-turn. The partial buffer capacity stays unchanged, rounded-corner clipping continues to use the active 240 × 320 dimensions, and no full-screen rotation buffer is allocated. The stop path retains an idempotent portrait request for recovery safety. Portrait clipping, target readability, and control feel still need physical-device validation.
 
@@ -201,4 +217,4 @@ Before firmware delivery run `./tools/validate.sh --static`, `./tools/validate.s
 
 ## 10. Decisions to revisit after the first playable build
 
-The implemented baseline now includes separate Shoot and Keep challenges; upright portrait play; a reversible column-wise six-target cycle starting at top-center; timing-based action; five-attempt summaries; neutral pixel art; bilingual UI; persistent language; and RAM-only scores. Shooting retains calibrated 90% / 65% / 25% average goal rates. Goalkeeper mode adds truthful difficulty-timed cues and the exact/same-column save table above. Playtests should determine whether the six blue-shooter cues are readable at native size, whether the six keeper poses and timing feel fair, whether upper/lower cells and Chinese remain legible, and whether 20 FPS feels responsive. Then decide whether alternating shootouts or saved records is the next priority.
+The implemented v1.5 baseline includes Shootout, Shoot Practice and Keeper Practice; a locked animated coin toss; explicit role handoffs; official regular early-finish logic; paired uncapped sudden death backed by fixed memory; upright portrait play; the reversible six-target cycle; bilingual UI; persistent language; and RAM-only scores. Shooting retains calibrated 90% / 65% / 25% average goal rates, while goalkeeper play retains truthful difficulty-timed cues and the exact/same-column save table. Device playtests must still validate coin readability, handoff timing, cues, two-digit scores, long-exit behavior, audio synchronization, heap/stack stability and endurance.

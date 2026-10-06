@@ -38,19 +38,22 @@ const char *penalty_pre_shot_copy(const penalty_model_t *model) {
     if (!model) return "";
     penalty_language_t language = (unsigned)model->language < PENALTY_LANGUAGE_COUNT
         ? model->language : PENALTY_DEFAULT_LANGUAGE;
-    if (model->mode == PENALTY_MODE_KEEPER &&
-        (model->difficulty == PENALTY_EASY || model->completed == 0))
+    bool keeper_turn = penalty_player_is_keeper(model);
+    uint32_t ordinal = model->session_kind == PENALTY_SESSION_SHOOTOUT
+        ? model->match.total_settled : model->completed;
+    if (keeper_turn && (model->difficulty == PENALTY_EASY || ordinal == 0))
         return language == PENALTY_LANGUAGE_ZH_CN ? "观察射手动作。" : "READ THE KICKER.";
-    if (model->mode == PENALTY_MODE_SHOOTER &&
-        (model->difficulty == PENALTY_EASY || model->completed == 0))
+    if (!keeper_turn && (model->difficulty == PENALTY_EASY || ordinal == 0))
         return language == PENALTY_LANGUAGE_ZH_CN ? "深绿线 = 90%" : "DARK LINE = 90%";
-    if (model->mode == PENALTY_MODE_KEEPER && model->completed == PENALTY_SHOTS - 1)
+    if (model->session_kind != PENALTY_SESSION_SHOOTOUT && keeper_turn &&
+        model->completed == PENALTY_SHOTS - 1)
         return language == PENALTY_LANGUAGE_ZH_CN ? "最后一扑，守住球门。" : "LAST SAVE. STAY BIG.";
-    if (model->mode == PENALTY_MODE_SHOOTER && model->completed == PENALTY_SHOTS - 1)
+    if (model->session_kind != PENALTY_SESSION_SHOOTOUT && !keeper_turn &&
+        model->completed == PENALTY_SHOTS - 1)
         return language == PENALTY_LANGUAGE_ZH_CN ? "最后一球，别紧张。" : "LAST KICK. NO PRESSURE.";
 
-    unsigned index = raw_prompt_index(&model->current, model->completed);
-    if (model->completed >= 2) {
+    unsigned index = raw_prompt_index(&model->current, ordinal);
+    if (model->session_kind != PENALTY_SESSION_SHOOTOUT && model->completed >= 2) {
         unsigned previous = raw_prompt_index(&model->shots[1], 1);
         for (unsigned shot = 2; shot < model->completed; ++shot) {
             unsigned next = raw_prompt_index(&model->shots[shot], shot);
@@ -59,7 +62,7 @@ const char *penalty_pre_shot_copy(const penalty_model_t *model) {
         }
         if (index == previous) index = (index + 1) % (sizeof(s_prompts[0]) / sizeof(s_prompts[0][0]));
     }
-    return model->mode == PENALTY_MODE_KEEPER
+    return keeper_turn
         ? s_keeper_prompts[language][index] : s_prompts[language][index];
 }
 

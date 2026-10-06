@@ -9,8 +9,10 @@ static void begin(penalty_model_t *m) {
     assert(m->state == PENALTY_TITLE);
     penalty_model_input(m, PENALTY_INPUT_OK, 1); /* duplicate entry */
     assert(m->state == PENALTY_TITLE);
-    penalty_model_input(m, PENALTY_INPUT_OK, 2);
+    penalty_model_input(m, PENALTY_INPUT_DOWN, 2);
+    penalty_model_input(m, PENALTY_INPUT_OK, 3);
     assert(m->state == PENALTY_AIM);
+    assert(m->session_kind == PENALTY_SESSION_SHOOT_PRACTICE);
 }
 
 static void begin_keeper(penalty_model_t *m) {
@@ -18,9 +20,56 @@ static void begin_keeper(penalty_model_t *m) {
     penalty_model_input(m, PENALTY_INPUT_OK, 1);
     assert(m->state == PENALTY_TITLE);
     penalty_model_input(m, PENALTY_INPUT_DOWN, 2);
-    penalty_model_input(m, PENALTY_INPUT_OK, 3);
+    penalty_model_input(m, PENALTY_INPUT_DOWN, 3);
+    penalty_model_input(m, PENALTY_INPUT_OK, 4);
     assert(m->state == PENALTY_AIM);
-    assert(m->mode == PENALTY_MODE_KEEPER);
+    assert(m->session_kind == PENALTY_SESSION_KEEP_PRACTICE);
+    assert(penalty_player_is_keeper(m));
+}
+
+static void begin_shootout(penalty_model_t *m, uint32_t seed, uint64_t *time) {
+    penalty_model_init(m, seed, 0);
+    penalty_model_input(m, PENALTY_INPUT_OK, 1);
+    penalty_model_input(m, PENALTY_INPUT_OK, 2);
+    assert(m->state == PENALTY_COIN_READY);
+    penalty_model_input(m, PENALTY_INPUT_OK, 3);
+    assert(m->state == PENALTY_COIN_SPIN);
+    assert(m->match.coin_face != PENALTY_COIN_UNSET);
+    penalty_coin_face_t locked = m->match.coin_face;
+    uint32_t random = m->random;
+    penalty_model_input(m, PENALTY_INPUT_OK, 4);
+    penalty_model_resync(m, 500);
+    assert(m->state == PENALTY_COIN_SPIN);
+    assert(m->match.coin_face == locked && m->random == random);
+    penalty_model_tick(m, 1003);
+    assert(m->state == PENALTY_COIN_RESULT);
+    assert(m->match.coin_face == locked && m->random == random);
+    penalty_model_input(m, PENALTY_INPUT_OK, 1004);
+    assert(m->state == PENALTY_AIM);
+    assert(m->turn_role == (locked == PENALTY_COIN_FOOTBALL
+        ? PENALTY_ROLE_SHOOTER : PENALTY_ROLE_KEEPER));
+    *time = 1100;
+}
+
+static void settle_match_kick(penalty_model_t *m, bool scoring_side_scores, uint64_t *time) {
+    assert(m->session_kind == PENALTY_SESSION_SHOOTOUT);
+    assert(m->state == PENALTY_AIM);
+    bool player_shoots = !penalty_player_is_keeper(m);
+    m->current.outcome = player_shoots
+        ? (scoring_side_scores ? PENALTY_GOAL : PENALTY_HIGH)
+        : (scoring_side_scores ? PENALTY_KEEPER_READ_MISS : PENALTY_KEEPER_CATCH);
+    m->state = PENALTY_FLIGHT;
+    m->since_ms = *time;
+    penalty_model_tick(m, *time + PENALTY_FLIGHT_MS);
+    assert(m->state == PENALTY_RESULT);
+    penalty_model_tick(m, *time + PENALTY_FLIGHT_MS + PENALTY_RESULT_MS);
+    *time += PENALTY_FLIGHT_MS + PENALTY_RESULT_MS + 10;
+}
+
+static void continue_match(penalty_model_t *m, uint64_t *time) {
+    assert(m->state == PENALTY_HANDOFF);
+    penalty_model_input(m, PENALTY_INPUT_OK, (*time)++);
+    assert(m->state == PENALTY_AIM);
 }
 
 static uint64_t perfect_time(const penalty_shot_t *s) {
@@ -162,7 +211,8 @@ static void goalkeeper_cue_and_session(void) {
     }
     assert(m.state == PENALTY_SUMMARY && m.saves == 5 && m.goals == 0);
     penalty_model_input(&m, PENALTY_INPUT_OK, t);
-    assert(m.state == PENALTY_AIM && m.mode == PENALTY_MODE_KEEPER && m.saves == 0);
+    assert(m.state == PENALTY_AIM &&
+           m.session_kind == PENALTY_SESSION_KEEP_PRACTICE && m.saves == 0);
 }
 
 static void meter_windows(void) {
@@ -314,33 +364,34 @@ static void menus_and_exit(void) {
     penalty_model_input(&m, PENALTY_INPUT_OK, 1);
     penalty_model_input(&m, PENALTY_INPUT_DOWN, 2);
     penalty_model_input(&m, PENALTY_INPUT_DOWN, 3);
-    penalty_model_input(&m, PENALTY_INPUT_OK, 4);
-    assert(m.state == PENALTY_SETTINGS && m.selection == 0);
+    penalty_model_input(&m, PENALTY_INPUT_DOWN, 4);
     penalty_model_input(&m, PENALTY_INPUT_OK, 5);
-    assert(m.difficulty == PENALTY_NORMAL && !m.muted);
+    assert(m.state == PENALTY_SETTINGS && m.selection == 0);
     penalty_model_input(&m, PENALTY_INPUT_OK, 6);
-    assert(m.difficulty == PENALTY_HARD);
+    assert(m.difficulty == PENALTY_NORMAL && !m.muted);
     penalty_model_input(&m, PENALTY_INPUT_OK, 7);
+    assert(m.difficulty == PENALTY_HARD);
+    penalty_model_input(&m, PENALTY_INPUT_OK, 8);
     assert(m.difficulty == PENALTY_EASY);
-    penalty_model_input(&m, PENALTY_INPUT_DOWN, 8);
-    penalty_model_input(&m, PENALTY_INPUT_OK, 9);
+    penalty_model_input(&m, PENALTY_INPUT_DOWN, 9);
+    penalty_model_input(&m, PENALTY_INPUT_OK, 10);
     assert(m.muted);
-    penalty_model_input(&m, PENALTY_INPUT_DOWN, 10);
-    penalty_model_input(&m, PENALTY_INPUT_OK, 11);
-    assert(m.language == PENALTY_LANGUAGE_EN);
+    penalty_model_input(&m, PENALTY_INPUT_DOWN, 11);
     penalty_model_input(&m, PENALTY_INPUT_OK, 12);
+    assert(m.language == PENALTY_LANGUAGE_EN);
+    penalty_model_input(&m, PENALTY_INPUT_OK, 13);
     assert(m.language == PENALTY_LANGUAGE_ZH_CN);
     penalty_model_set_language(&m, PENALTY_LANGUAGE_ZH_CN);
     assert(m.language == PENALTY_LANGUAGE_ZH_CN);
     penalty_model_set_language(&m, (penalty_language_t)99);
     assert(m.language == PENALTY_LANGUAGE_ZH_CN);
 
-    penalty_model_input(&m, PENALTY_INPUT_DOWN, 13);
-    penalty_model_input(&m, PENALTY_INPUT_OK, 14);
-    assert(m.state == PENALTY_TITLE && m.selection == 2);
-    penalty_model_input(&m, PENALTY_INPUT_UP, 15);
+    penalty_model_input(&m, PENALTY_INPUT_DOWN, 14);
+    penalty_model_input(&m, PENALTY_INPUT_OK, 15);
+    assert(m.state == PENALTY_TITLE && m.selection == 3);
     penalty_model_input(&m, PENALTY_INPUT_UP, 16);
-    penalty_model_input(&m, PENALTY_INPUT_OK, 17);
+    penalty_model_input(&m, PENALTY_INPUT_UP, 17);
+    penalty_model_input(&m, PENALTY_INPUT_OK, 18);
     assert(m.muted && m.language == PENALTY_LANGUAGE_ZH_CN && m.state == PENALTY_AIM);
     for (unsigned s = PENALTY_COVER; s <= PENALTY_HELP; ++s) {
         m.state = (penalty_state_t)s;
@@ -384,8 +435,9 @@ static void five_misses(void) {
     penalty_model_input(&m, PENALTY_INPUT_DOWN, t++);
     penalty_model_input(&m, PENALTY_INPUT_DOWN, t++);
     penalty_model_input(&m, PENALTY_INPUT_DOWN, t++);
+    penalty_model_input(&m, PENALTY_INPUT_DOWN, t++);
     penalty_model_input(&m, PENALTY_INPUT_OK, t++);
-    assert(m.state != PENALTY_EXITING); /* Fourth title item opens instructions. */
+    assert(m.state != PENALTY_EXITING); /* Fifth title item opens instructions. */
     assert(m.state == PENALTY_HELP);
     penalty_model_input(&m, PENALTY_INPUT_OK, t++);
     assert(m.state == PENALTY_TITLE && m.selection == 0);
@@ -434,29 +486,210 @@ static void event_sequences(void) {
         unsigned goals = 0, saves = 0, perfect = 0;
         assert(m.completed <= 5);
         for (unsigned j = 0; j < m.completed; ++j) {
-            if (m.mode == PENALTY_MODE_KEEPER) saves += penalty_is_save(m.shots[j].outcome);
+            if (m.session_kind == PENALTY_SESSION_KEEP_PRACTICE)
+                saves += penalty_is_save(m.shots[j].outcome);
             else goals += penalty_is_goal(m.shots[j].outcome);
             perfect += m.shots[j].timing_value >= m.shots[j].perfect_low &&
                        m.shots[j].timing_value <= m.shots[j].perfect_low + 1;
             assert(m.shots[j].direction < PENALTY_TARGET_COUNT);
             assert(m.shots[j].keeper < PENALTY_TARGET_COUNT);
         }
-        assert(m.goals == goals && m.saves == saves && m.perfect == perfect);
+        if (m.session_kind != PENALTY_SESSION_SHOOTOUT)
+            assert(m.goals == goals && m.saves == saves && m.perfect == perfect);
         if (m.state == PENALTY_SUMMARY) assert(m.completed == 5);
+        assert(m.match.recent_count <= PENALTY_RECENT_KICKS);
     }
+}
+
+static uint32_t seed_for_face(penalty_coin_face_t face) {
+    for (uint32_t seed = 1; seed < 1000; ++seed) {
+        penalty_model_t m;
+        uint64_t t;
+        begin_shootout(&m, seed, &t);
+        if (m.match.coin_face == face) return seed;
+    }
+    assert(!"both coin faces must be reachable");
+    return 1;
+}
+
+static void coin_toss_and_order(void) {
+    uint32_t football = seed_for_face(PENALTY_COIN_FOOTBALL);
+    uint32_t glove = seed_for_face(PENALTY_COIN_GLOVE);
+    assert(football != glove);
+    penalty_model_t m;
+    uint64_t t;
+    begin_shootout(&m, football, &t);
+    assert(!penalty_player_is_keeper(&m));
+    settle_match_kick(&m, true, &t);
+    assert(m.state == PENALTY_HANDOFF && penalty_player_is_keeper(&m));
+    continue_match(&m, &t);
+    settle_match_kick(&m, false, &t);
+    assert(m.state == PENALTY_HANDOFF && !penalty_player_is_keeper(&m));
+
+    begin_shootout(&m, glove, &t);
+    assert(penalty_player_is_keeper(&m));
+    settle_match_kick(&m, false, &t);
+    assert(m.state == PENALTY_HANDOFF && !penalty_player_is_keeper(&m));
+}
+
+static void paired_round_display(void) {
+    assert(penalty_round_for_kick(0) == 0);
+    for (uint32_t kick = 1; kick <= 10000; ++kick)
+        assert(penalty_round_for_kick(kick) == (kick + 1) / 2);
+    assert(penalty_round_for_kick(UINT32_MAX) == UINT32_MAX / 2 + 1);
+    assert(penalty_shootout_round(NULL) == 0);
+    for (unsigned face = PENALTY_COIN_FOOTBALL; face <= PENALTY_COIN_GLOVE; ++face) {
+        penalty_model_t m;
+        uint64_t t;
+        begin_shootout(&m, seed_for_face((penalty_coin_face_t)face), &t);
+        for (unsigned kick = 0; kick < 20; ++kick) {
+            unsigned expected = kick < 10 ? kick / 2 + 1 : (kick - 10) / 2 + 1;
+            assert(penalty_shootout_round(&m) == expected);
+            m.current.outcome = penalty_player_is_keeper(&m)
+                ? PENALTY_KEEPER_READ_MISS : PENALTY_GOAL;
+            m.state = PENALTY_FLIGHT;
+            m.since_ms = t;
+            assert(penalty_shootout_round(&m) == expected);
+            penalty_model_tick(&m, t + PENALTY_FLIGHT_MS);
+            assert(m.state == PENALTY_RESULT);
+            /* A settled second kick still belongs to its result's pair. */
+            assert(penalty_shootout_round(&m) == expected);
+            penalty_model_tick(&m, t + PENALTY_FLIGHT_MS + PENALTY_RESULT_MS);
+            assert(m.state == PENALTY_HANDOFF);
+            unsigned next = kick == 9 ? 1 : expected + (kick % 2 != 0);
+            assert(penalty_shootout_round(&m) == next);
+            t += PENALTY_FLIGHT_MS + PENALTY_RESULT_MS + 10;
+            continue_match(&m, &t);
+        }
+    }
+}
+
+static void regular_early_finish_boundaries(void) {
+    penalty_model_t m;
+    uint64_t t;
+    begin_shootout(&m, seed_for_face(PENALTY_COIN_FOOTBALL), &t);
+    /* Three player goals and two AI misses: lead equals AI's three remaining kicks. */
+    for (unsigned kick = 0; kick < 5; ++kick) {
+        settle_match_kick(&m, !penalty_player_is_keeper(&m), &t);
+        assert(m.state == PENALTY_HANDOFF);
+        continue_match(&m, &t);
+    }
+    assert(m.match.player_goals == 3 && m.match.ai_goals == 0);
+    assert(m.match.result == PENALTY_MATCH_IN_PROGRESS);
+    settle_match_kick(&m, false, &t);
+    assert(m.state == PENALTY_MATCH_SUMMARY);
+    assert(m.match.result == PENALTY_MATCH_PLAYER_WIN);
+    assert(m.match.ended_early);
+
+    begin_shootout(&m, seed_for_face(PENALTY_COIN_GLOVE), &t);
+    while (m.state != PENALTY_MATCH_SUMMARY) {
+        settle_match_kick(&m, penalty_player_is_keeper(&m), &t);
+        if (m.state == PENALTY_HANDOFF) continue_match(&m, &t);
+    }
+    assert(m.match.result == PENALTY_MATCH_AI_WIN && m.match.ended_early);
+}
+
+static void sudden_death_and_fixed_memory(void) {
+    penalty_model_t m;
+    uint64_t t;
+    begin_shootout(&m, seed_for_face(PENALTY_COIN_FOOTBALL), &t);
+    for (unsigned kick = 0; kick < 10; ++kick) {
+        settle_match_kick(&m, true, &t);
+        assert(m.state == PENALTY_HANDOFF);
+        continue_match(&m, &t);
+    }
+    assert(m.match.sudden_death && m.match.sudden_death_round == 1);
+    assert(m.match.player_attempts == 5 && m.match.ai_attempts == 5);
+
+    for (unsigned pair = 0; pair < 1000; ++pair) {
+        settle_match_kick(&m, true, &t);
+        assert(m.state == PENALTY_HANDOFF);
+        assert(m.match.result == PENALTY_MATCH_IN_PROGRESS); /* first kick never decides */
+        continue_match(&m, &t);
+        settle_match_kick(&m, true, &t);
+        assert(m.state == PENALTY_HANDOFF);
+        assert(m.match.sudden_death_round == pair + 2);
+        assert(m.match.recent_count == PENALTY_RECENT_KICKS);
+        continue_match(&m, &t);
+    }
+    assert(m.match.player_attempts == 1005 && m.match.ai_attempts == 1005);
+    settle_match_kick(&m, true, &t);
+    assert(m.state == PENALTY_HANDOFF && m.match.result == PENALTY_MATCH_IN_PROGRESS);
+    continue_match(&m, &t);
+    settle_match_kick(&m, false, &t);
+    assert(m.state == PENALTY_MATCH_SUMMARY);
+    assert(m.match.result == PENALTY_MATCH_PLAYER_WIN);
+    assert(m.match.sudden_death_round == 1001);
+
+    penalty_model_input(&m, PENALTY_INPUT_OK, t++);
+    assert(m.state == PENALTY_COIN_READY);
+    assert(m.match.result == PENALTY_MATCH_IN_PROGRESS);
+    assert(m.match.player_attempts == 0 && m.match.ai_attempts == 0);
+}
+
+static void shootout_abandon(void) {
+    penalty_model_t m;
+    uint64_t t;
+    begin_shootout(&m, seed_for_face(PENALTY_COIN_FOOTBALL), &t);
+    settle_match_kick(&m, true, &t);
+    assert(m.state == PENALTY_HANDOFF);
+    penalty_model_input(&m, PENALTY_INPUT_EXIT, t++);
+    assert(m.state == PENALTY_EXITING);
+    assert(m.match.result == PENALTY_MATCH_ABANDONED);
+}
+
+static void menu_wraparound(void) {
+    penalty_model_t m;
+    penalty_model_init(&m, 42, 0);
+    uint64_t t = 1;
+    penalty_model_input(&m, PENALTY_INPUT_OK, t++);
+    assert(m.state == PENALTY_TITLE && m.selection == 0);
+    penalty_model_input(&m, PENALTY_INPUT_UP, t++);
+    assert(m.selection == 4);
+    penalty_model_input(&m, PENALTY_INPUT_DOWN, t++);
+    assert(m.selection == 0);
+    for (unsigned i = 0; i < 20; ++i) {
+        penalty_model_input(&m, PENALTY_INPUT_DOWN, t++);
+        assert(m.selection == (i + 1) % 5);
+    }
+    for (unsigned i = 0; i < 20; ++i) {
+        penalty_model_input(&m, PENALTY_INPUT_UP, t++);
+        assert(m.selection == (4 - i % 5));
+    }
+    m.selection = 3;
+    penalty_model_input(&m, PENALTY_INPUT_OK, t++);
+    assert(m.state == PENALTY_SETTINGS && m.selection == 0);
+    penalty_model_input(&m, PENALTY_INPUT_UP, t++);
+    assert(m.selection == 3);
+    penalty_model_input(&m, PENALTY_INPUT_DOWN, t++);
+    assert(m.selection == 0);
+    penalty_difficulty_t difficulty = m.difficulty;
+    penalty_language_t language = m.language;
+    bool muted = m.muted;
+    for (unsigned i = 0; i < 16; ++i) {
+        penalty_model_input(&m, PENALTY_INPUT_DOWN, t++);
+        assert(m.selection == (i + 1) % 4);
+    }
+    for (unsigned i = 0; i < 16; ++i) {
+        penalty_model_input(&m, PENALTY_INPUT_UP, t++);
+        assert(m.selection == (3 - i % 4));
+    }
+    assert(m.difficulty == difficulty && m.language == language && m.muted == muted);
 }
 
 int main(void) {
     penalty_model_t menu;
     penalty_model_init(&menu, 42, 0);
     penalty_model_input(&menu, PENALTY_INPUT_OK, 1);
-    for (unsigned i = 2; i <= 4; ++i)
+    for (unsigned i = 2; i <= 5; ++i)
         penalty_model_input(&menu, PENALTY_INPUT_DOWN, i);
-    assert(menu.selection == 3); /* SHOOT, KEEP, SETTINGS, HELP */
+    assert(menu.selection == 4); /* SHOOTOUT, SHOOT, KEEP, SETTINGS, HELP */
     boundaries(); calibrated_average_goal_rates(); meter_windows(); generated_zones();
     goalkeeper_rules(); goalkeeper_cue_and_session();
-    target_navigation();
+    target_navigation(); menu_wraparound();
     session(); timing_and_recovery(); menus_and_exit(); five_misses();
+    coin_toss_and_order(); paired_round_display(); regular_early_finish_boundaries();
+    sudden_death_and_fixed_memory(); shootout_abandon();
     event_sequences();
     puts("Penalty model: PASS");
     return 0;

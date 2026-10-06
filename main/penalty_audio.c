@@ -49,10 +49,15 @@ static penalty_sfx_event_t difficulty_event(penalty_difficulty_t difficulty) {
 static bool is_confirm_transition(penalty_state_t before, penalty_state_t after) {
     return (before == PENALTY_COVER && after == PENALTY_TITLE) ||
            (before == PENALTY_TITLE &&
-            (after == PENALTY_SETTINGS || after == PENALTY_AIM || after == PENALTY_HELP)) ||
+            (after == PENALTY_SETTINGS || after == PENALTY_COIN_READY ||
+             after == PENALTY_AIM || after == PENALTY_HELP)) ||
            (before == PENALTY_SETTINGS && after == PENALTY_TITLE) ||
            (before == PENALTY_HELP && after == PENALTY_TITLE) ||
-           (before == PENALTY_SUMMARY && (after == PENALTY_AIM || after == PENALTY_TITLE));
+           (before == PENALTY_COIN_RESULT && after == PENALTY_AIM) ||
+           (before == PENALTY_HANDOFF && after == PENALTY_AIM) ||
+           (before == PENALTY_SUMMARY && (after == PENALTY_AIM || after == PENALTY_TITLE)) ||
+           (before == PENALTY_MATCH_SUMMARY &&
+            (after == PENALTY_COIN_READY || after == PENALTY_TITLE));
 }
 
 size_t penalty_audio_events(penalty_audio_tracker_t *tracker,
@@ -75,12 +80,19 @@ size_t penalty_audio_events(penalty_audio_tracker_t *tracker,
     if (before->state != after->state && after->state == PENALTY_FLIGHT)
         tracker->kick_emitted = false;
 
-    if (before->completed != after->completed)
+    if (before->state == PENALTY_COIN_READY && after->state == PENALTY_COIN_SPIN)
+        append(PENALTY_SFX_COIN_SPIN, events, capacity, &count);
+    else if (before->state == PENALTY_COIN_SPIN && after->state == PENALTY_COIN_RESULT)
+        append(PENALTY_SFX_COIN_LAND, events, capacity, &count);
+    else if (before->completed != after->completed ||
+             before->match.total_settled != after->match.total_settled)
         append(result_event(after->current.outcome), events, capacity, &count);
     else if (before->state == PENALTY_RESULT && after->state == PENALTY_SUMMARY)
-        append((after->mode == PENALTY_MODE_KEEPER ? after->saves : after->goals) == PENALTY_SHOTS
+        append((penalty_player_is_keeper(after) ? after->saves : after->goals) == PENALTY_SHOTS
                    ? PENALTY_SFX_FLAWLESS : PENALTY_SFX_FULL_TIME,
                events, capacity, &count);
+    else if (before->state == PENALTY_RESULT && after->state == PENALTY_MATCH_SUMMARY)
+        append(PENALTY_SFX_FULL_TIME, events, capacity, &count);
     else if (before->state == PENALTY_AIM && after->state == PENALTY_CHARGE)
         append(PENALTY_SFX_CHARGE, events, capacity, &count);
     else if (is_confirm_transition(before->state, after->state))
@@ -134,6 +146,20 @@ bool penalty_audio_cue(penalty_sfx_event_t event, penalty_sfx_cue_t *cue) {
         cue->audible_when_muted = true;
         segment(cue, PENALTY_SFX_SEGMENT_TONE, 800, 40);
         segment(cue, PENALTY_SFX_SEGMENT_TONE, 420, 70);
+        break;
+    case PENALTY_SFX_COIN_SPIN:
+        cue->priority = PENALTY_SFX_PRIORITY_ACTION;
+        cue->stale_ms = 400;
+        segment(cue, PENALTY_SFX_SEGMENT_TONE, 720, 35);
+        segment(cue, PENALTY_SFX_SEGMENT_TONE, 900, 35);
+        segment(cue, PENALTY_SFX_SEGMENT_TONE, 720, 35);
+        segment(cue, PENALTY_SFX_SEGMENT_TONE, 900, 35);
+        break;
+    case PENALTY_SFX_COIN_LAND:
+        cue->priority = PENALTY_SFX_PRIORITY_ACTION;
+        cue->stale_ms = 500;
+        segment(cue, PENALTY_SFX_SEGMENT_TONE, 420, 45);
+        segment(cue, PENALTY_SFX_SEGMENT_TONE, 680, 85);
         break;
     case PENALTY_SFX_CHARGE:
         cue->priority = PENALTY_SFX_PRIORITY_ACTION;

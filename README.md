@@ -2,67 +2,61 @@
   <a href="README.zh_CN.md">简体中文</a> · <strong>English</strong>
 </p>
 
-# Penalty
+# Penalty v2.0.0 — Multiplayer Public Beta
 
-Penalty is an offline, portrait penalty-kick game for the [FoloToy AI Passport](https://github.com/folotoy/ai-passport). Keep the device upright and use its three buttons to play either side of a five-attempt shootout:
-
-- **Shoot Challenge** — choose one of six goal cells, stop the timing meter, and beat the black-clad keeper.
-- **Keeper Challenge** — read the blue striker's body and foot pose, choose the black keeper's dive, and time the save.
-
-The game includes Easy, Normal, and Hard difficulties, English and Simplified Chinese, persistent language selection, short sound cues, pixel artwork, and a five-attempt summary.
+A portrait, three-button penalty game for [FoloToy AI Passport](https://github.com/folotoy/ai-passport). Challenge AI, practise shooting or keeping, or play with a friend on a nearby second device. No Internet connection is required.
 
 ## Download
 
-Installable firmware is published on the [Releases page](https://github.com/yishan/penalty/releases). Download the file ending in `-full.bin`; GitHub's automatically generated source archives are not flashable firmware.
+Get the [v2.0.0 Pre-release](https://github.com/yishan/penalty/releases/tag/v2.0.0). Selected two-device checks passed; endurance and the full exception matrix remain incomplete. [v1.4.2](https://github.com/yishan/penalty/releases/tag/v1.4.2) remains available.
 
-| Version | Status | Firmware SHA-256 |
-| --- | --- | --- |
-| [v1.4.2](https://github.com/yishan/penalty/releases/tag/v1.4.2) | Latest; build and host tests passed, device acceptance pending | `c7f93051605164d6e26c479a63164bdb04e1c26d215bd9ea9e1637a494df4037` |
-| [v1.1.0](https://github.com/yishan/penalty/releases/tag/v1.1.0) | Historical device-verified visual refresh | `98aeea498634309fe4d10248347c513dd7b212e3d9ce02d651a7400c5ba66607` |
+| Asset | Purpose |
+| --- | --- |
+| `FoloToy-AI-Passport-Penalty-v2.0.0-full.bin` | Standalone image at `0x0`; 1,638,400 bytes |
+| `FoloToy-AI-Passport-Penalty-v2.0.0-app.bin` | App-only update into a verified compatible app partition; 1,572,864 bytes |
+| `SHA256SUMS.txt` | Download integrity checks |
+| Three PNGs | Actual UI desktop captures, not device photographs |
 
-Each release also includes `SHA256SUMS.txt`. Verify the download before flashing:
+**The full image replaces the bootloader/partition layout and may reset settings or make prior apps/resources inaccessible. Do not use it to update a Launcher slot. Never write the app-only file at `0x0`.** Inspect the actual device layout and back up data that must be retained. Launcher slot/rollback/return behavior is not device-verified for this release.
 
-```bash
-shasum -a 256 FoloToy-AI-Passport-Penalty-v1.4.2-full.bin
-```
-
-Flash the merged image at offset `0x0`. It contains the bootloader, partition table, and application; writing it may reset stored settings such as the saved language.
+Download the files and `SHA256SUMS.txt`, then run `shasum -a 256 -c SHA256SUMS.txt`. Automatic source archives are not flashable firmware.
 
 ## How to play
 
-Press OK on the portrait cover. UP and DOWN select Shoot, Keep, Settings, or Help; OK confirms.
+Keep the device upright. Press OK on the cover. UP/DOWN select menu items with wraparound; OK confirms. Hold OK to return to the cover.
 
-Both play modes use the same six-cell order. Every attempt starts at top-center. DOWN cycles:
+- **Shootout:** challenge AI or use Create Lobby / Join Lobby. One kick each makes a round. Five regular rounds, early finish when a comeback is impossible, paired sudden death on a tie.
+- **Shoot Practice:** select a target, press OK to start the meter, then press OK to shoot. Five attempts.
+- **Keeper Practice:** read the AI shooter's opening pose, choose a dive and time the save. Five attempts.
+- **Settings:** difficulty, sound and English/Simplified Chinese. Only language persists across restarts.
 
-```text
-top-center → bottom-center → top-left → bottom-left
-           → top-right → bottom-right → top-center
-```
+DOWN cycles `top-center → bottom-center → top-left → bottom-left → top-right → bottom-right`; UP reverses it. The first OK locks the target and starts the meter; the next stops it to kick or dive.
 
-UP follows the reverse order. This keeps vertical movement aligned with the physical buttons while changing columns only after visiting both cells.
+### Nearby multiplayer
 
-### Shoot Challenge
+1. Open Shootout on both devices. Choose Create Lobby on one, Join Lobby and the matching four-digit lobby code on the other.
+2. Compare the six-digit security values and confirm only if they match. Confirm the creator's chosen difficulty.
+3. The creator presses OK to toss the coin. Creating or joining does not decide who shoots first.
+4. Both people choose independently without opponent direction cues. The creator wears red, the joiner blue, and the keeper black on both screens.
+5. Keep both devices powered after a disconnect. Recovery within 30 seconds retains locked choices and scores without another toss or duplicate settlement. Timeout ends without a winner; device restart does not restore the match.
 
-1. Select a target and press OK.
-2. Press OK again to stop the timing meter and shoot.
+![Create Lobby selected](assets/images/penalty/releases/v2.0.0/shootout-create-zh.png)
+![Join Lobby selected](assets/images/penalty/releases/v2.0.0/shootout-join-zh.png)
 
-The two-value dark line has a 90% average goal rate, the rest of the green band 65%, and normal power outside green 25%. Very weak and excessive power fail. Easy, Normal, and Hard narrow the green band from 20 to 11 to 6 values.
+## Changes and validation
 
-### Keeper Challenge
+v2 adds nearby multiplayer, consistent jerseys and paired-round counters, clearer menu spacing and selection markers, revised cover text, balanced character sizes and lossless footprint reductions. See [release notes](penalty/docs/releases/v2.0.0.md).
 
-1. Watch the blue striker's truthful opening pose. The cue remains visible for 900 / 600 / 350 ms on Easy / Normal / Hard.
-2. Choose the black keeper's dive and press OK.
-3. Press OK again to stop the timing meter and dive.
+- Build: PASS — ESP-IDF 5.5.3 full gate and verified firmware archive.
+- Host tests: PASS — rules/protocol/recovery, bilingual actual-LVGL rendering and 50-cycle UI lifecycle checks.
+- Device tests: PASS only for this exact normal v2.0.0 app's installation, independent Flash verification and bounded startup. Earlier development builds received selected two-device gameplay/recovery checks.
+- Unverified: normal-release gameplay, endurance, full disconnect/security/compatibility matrix, multiple lobbies, resource/timing/power measurements and Launcher acceptance. See [evidence](penalty/docs/validation.md).
 
-Reading the exact cell gives 90% / 65% / 25% save rates on the dark line / green band / outside green. Choosing the other row in the same column gives 35% / 20% / 5%; another column cannot save the shot.
+GitHub distribution is separate from the official FoloToy community; this version has not been submitted there.
 
-Five attempts lead to a goals or saves summary. Long-press OK to leave a session and return to the cover.
+## Build the open-source layer
 
-## Source package
-
-This repository is an application-layer export, not a standalone ESP-IDF project. It is generated from authoritative Penalty source commit `d5f08e7a1d345f9d9cac5552167eaf4166c8f5d0` against AI Passport base `ccd3576e304f7e17d9a0d4c12a2d05db379b14c0`.
-
-Apply it to that exact baseline:
+This is a generated application-layer export, **not a standalone ESP-IDF project**. [MANIFEST.md](MANIFEST.md) records the source commit, exact baseline, exported paths and licenses. Development stays in the authoritative Penalty worktree; reconcile public-repository changes there before another export.
 
 ```bash
 git clone https://github.com/folotoy/ai-passport.git
@@ -70,18 +64,12 @@ cd ai-passport
 git checkout ccd3576e304f7e17d9a0d4c12a2d05db379b14c0
 /path/to/penalty/apply.sh --dry-run .
 /path/to/penalty/apply.sh .
-```
-
-Then build with ESP-IDF 5.5.3:
-
-```bash
 source /path/to/esp-idf-v5.5.3/export.sh
-./tools/validate.sh --static
-./tools/validate.sh --firmware
+HOST_PYTHON=/path/to/python-with-pillow ./tools/validate.sh
 ```
 
-`MANIFEST.md` records the base, source commit, launcher contract, and every added or replaced path. The current package's full validation passed on 2026-09-23; the exact v1.4.2 GitHub firmware still needs on-device verification of the default Chinese startup and the shorter English Keeper title.
+Review the dry run and target edits before applying: listed paths are overwritten. The script checks the baseline and copies only `export-files.txt`. Normal builds disable development fault hooks; do not distribute `--dev-ble-faults` builds. Rebuild timestamps/paths/ELF hashes may differ; Release checksums identify the distributed binary.
 
-## Licence
+## License
 
-MIT, retaining the FoloToy baseline copyright notice in [LICENSE](LICENSE). The Chinese font subset uses Source Han Sans SC under the bundled SIL Open Font License; the sound effects are CC0; artwork source and generation notes are recorded in [`assets/README.md`](assets/README.md).
+MIT, retaining FoloToy and Yishan notices in [LICENSE](LICENSE). Source Han Sans SC subsets retain the bundled SIL Open Font License; synthesized audio is CC0. Original AI-generated artwork provenance is in [assets/README.md](assets/README.md).

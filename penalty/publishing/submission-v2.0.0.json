@@ -1,0 +1,19 @@
+{
+  "localVersion": "2.0.0",
+  "status": "prepared-not-uploaded",
+  "category": "games",
+  "titleZh": "点球决胜 v2.0.0｜联机公开测试版",
+  "titleEn": "Penalty Shootout v2.0.0 | Multiplayer Public Beta",
+  "descriptionZh": "把短暂休息变成一场点球决胜！单人挑战 AI，或约朋友各拿一台设备，在“点球决胜”中选择“创建联机”与“加入联机”。找到相同四位大厅码，核对六位安全码，确认难度后由创建方抛硬币决定先后手。上下键选方向，确认键锁定方向并开始时机条，再按确认完成射门或扑救。真人对战没有对手方向提示，靠判断与时机一决高下。创建方红衣、加入方蓝衣、门将黑衣；双方各射一球为一回合，五回合平分后进入突然死亡。另有点球练习、守门练习、中英文切换和声音开关。断线在 30 秒窗口内可自动恢复，超时无胜负中止；设备重启不恢复原比赛。本版为联机公开测试版，已完成部分双机试玩，长期耐久和完整异常场景仍未验证。配图是实际游戏界面的桌面渲染截图，非实机拍摄。",
+  "descriptionEn": "Turn a short break into a penalty shootout! Challenge the AI solo, or bring a friend and a second device: open Shootout and choose Create Lobby or Join Lobby. Match the four-digit lobby code, compare the six-digit security values, confirm difficulty, and let the creator toss the coin to decide who shoots first. Use UP/DOWN to aim, press OK to lock your target and start the timing meter, then press OK again to shoot or dive. Human opponents get no direction cue: read each other and time your move. The creator wears red, the joiner blue, and the keeper black. One kick each makes a round; a tie after five rounds goes to sudden death. Shoot Practice, Keeper Practice, Chinese/English menus and sound controls are included. A disconnected match can recover within a 30-second window; a timeout ends without a winner, and restarting a device does not restore the match. This multiplayer public beta has passed selected two-device play checks; endurance and the full exception matrix remain unverified. Images are desktop captures of the actual game UI, not device photographs.",
+  "firmware": "FoloToy-AI-Passport-Penalty-v2.0.0-full.bin",
+  "cover": "cover-zh.png",
+  "images": ["shootout-create-zh.png", "shootout-join-zh.png"],
+  "imageProvenance": "Native 240x320 desktop captures from the actual LVGL render harness; not physical-device captures.",
+  "sourceUrl": "",
+  "sourceUrlReason": "Configured remotes do not contain this unpublished Penalty revision.",
+  "historicalProjectId": 402,
+  "historicalRevisionId": 735,
+  "uploadTargetStatus": "Historical identity only; current server state and authorization must be checked before upload.",
+  "checksumFile": "SHA256SUMS.txt"
+}

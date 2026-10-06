@@ -59,8 +59,21 @@ here=$(cd "$(dirname "$0")" && pwd)
 list=$(mktemp)
 cleanup() { rm -f "$list"; }
 trap cleanup EXIT INT TERM
-(cd "$here" && find . -type f -not -path './.git' -not -path './.git/*') |
-    sed 's|^\./||' | sort > "$list"
+if [ ! -f "$here/export-files.txt" ]; then
+    echo "$0: missing export-files.txt" >&2
+    exit 2
+fi
+cp "$here/export-files.txt" "$list"
+while IFS= read -r f; do
+    case "$f" in
+        '' | /* | .. | ../* | */../* | */.. | .git | .git/*)
+            echo "$0: unsafe export path: $f" >&2; exit 2 ;;
+    esac
+    if [ ! -f "$here/$f" ] || [ -L "$here/$f" ]; then
+        echo "$0: missing or symlinked export: $f" >&2
+        exit 2
+    fi
+done < "$list"
 
 added=0
 changed=0

@@ -1,0 +1,2 @@
+# Explicit development-only overlay. Normal sdkconfig.defaults stays unchanged.
+CONFIG_PENALTY_DEV_BLE_FAULTS=y

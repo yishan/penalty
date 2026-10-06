@@ -1,7 +1,10 @@
 #include "penalty_ui.h"
 #include "penalty_scene.h"
+#include "penalty_i18n.h"
 #include "../../assets/images/penalty/gameplay-v2/gameplay_assets.h"
 #include "bsp_display_rounding.h"
+#include "src/draw/sw/lv_draw_sw.h"
+#include "src/draw/lv_draw_image_private.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,6 +15,7 @@ static uint16_t s_partial[320 * 320];
 static uint16_t s_buffer[240 * 20];
 static size_t s_flushed_pixels;
 static size_t s_max_motion_pixels;
+static unsigned s_blue_pose_mask;
 static lv_display_t *s_display;
 extern const uint16_t penalty_cover_pixels[240 * 320];
 
@@ -45,16 +49,69 @@ static void check_target_grid(const penalty_model_t *m) {
 static void check_foreground(const penalty_model_t *m, uint64_t now) {
     if (m->state < PENALTY_AIM || m->state > PENALTY_RESULT) return;
     penalty_scene_t s = penalty_scene_at(m, now);
-    const uint8_t *data = (s.blue_striker ? penalty_art_blue_striker[s.striker.frame]
-                                           : penalty_art_striker[s.striker.frame]).data;
-    for (unsigned y = 0; y < 88; ++y) {
-        for (unsigned x = 0; x < 88; ++x) {
-            unsigned i = y * 88 + x;
-            if (data[88 * 88 * 2 + i] != 255) continue;
+    const lv_image_dsc_t *image = s.blue_striker ? &penalty_art_blue_striker[s.striker.frame]
+                                               : &penalty_art_striker[s.striker.frame];
+    lv_point_t offset = s.blue_striker ? penalty_art_blue_striker_offsets[s.striker.frame]
+                                     : penalty_art_striker_offsets[s.striker.frame];
+    /* Reconstruct the original logical canvas only in the host reference path. */
+    uint8_t canvas[88 * 88 * 3] = {0};
+    for (unsigned y = 0; y < image->header.h; ++y) {
+        unsigned dst = (y + offset.y) * 88 + offset.x;
+        unsigned src = y * image->header.w;
+        memcpy(canvas + 2 * dst, image->data + 2 * src, image->header.w * 2);
+        memcpy(canvas + 88 * 88 * 2 + dst,
+               image->data + image->header.w * image->header.h * 2 + src,
+               image->header.w);
+    }
+    const uint8_t *data = canvas;
+    /* Reference transform is host-only; firmware still reads the Flash sprite.
+     * Its required scale/pivot are independent of the application descriptor. */
+    uint8_t transformed[88 * 88 * 3];
+    lv_area_t area = {0, 0, 87, 87};
+    if (s.blue_striker) {
+        lv_draw_image_dsc_t d;
+        lv_draw_image_dsc_init(&d);
+        d.scale_x = d.scale_y = 213;
+        d.pivot = (lv_point_t){83, 52};
+        d.antialias = false;
+        lv_image_buf_get_transformed_area(&area, 88, 88, 0, 213, 213, &d.pivot);
+        assert(area.x1 >= 0 && area.y1 >= 0 && area.x2 < 88 && area.y2 < 88);
+        memset(transformed, 0, sizeof(transformed));
+        lv_draw_sw_transform(&area, data, 88, 88, 176, &d, NULL,
+                             LV_COLOR_FORMAT_RGB565A8, transformed);
+        data = transformed;
+        s_blue_pose_mask |= 1u << s.striker.frame;
+    }
+    int width = lv_area_get_width(&area), height = lv_area_get_height(&area);
+    if (s.blue_striker && s.striker.frame == 0) {
+        int min_x = width, min_y = height, max_x = -1, max_y = -1;
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                if (data[width * height * 2 + y * width + x] < 128) continue;
+                if (x < min_x) min_x = x;
+                if (x > max_x) max_x = x;
+                if (y < min_y) min_y = y;
+                if (y > max_y) max_y = y;
+            }
+        }
+        /* Red ready is 34x65 at (27,13)..(60,77), not its 88x88 canvas.
+         * Blue must match its height and ground line, within pixel rounding. */
+        assert(max_x - min_x + 1 >= 35 && max_x - min_x + 1 <= 37);
+        assert(max_y - min_y + 1 >= 64 && max_y - min_y + 1 <= 66);
+        assert(area.y1 + min_y >= 12 && area.y1 + min_y <= 14);
+        assert(area.y1 + max_y >= 76 && area.y1 + max_y <= 78);
+    }
+    unsigned checked = 0;
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            unsigned i = y * width + x;
+            if (data[width * height * 2 + i] < LV_OPA_MAX) continue;
             unsigned expected = data[2*i] | data[2*i + 1] << 8;
-            assert(s_pixels[(s.striker.y + y) * 240 + s.striker.x + x] == expected);
+            assert(s_pixels[(s.striker.y + area.y1 + y) * 240 + s.striker.x + area.x1 + x] == expected);
+            ++checked;
         }
     }
+    assert(checked > 100);
 }
 
 static void check_labels(lv_obj_t *obj) {
@@ -79,6 +136,93 @@ static bool has_label_text(lv_obj_t *obj, const char *expected) {
     for (uint32_t i = 0; i < lv_obj_get_child_count(obj); ++i)
         if (has_label_text(lv_obj_get_child(obj, i), expected)) return true;
     return false;
+}
+
+static lv_obj_t *visible_label(lv_obj_t *obj, const char *expected) {
+    if (lv_obj_has_flag(obj, LV_OBJ_FLAG_HIDDEN)) return NULL;
+    if (lv_obj_check_type(obj, &lv_label_class) &&
+        strcmp(lv_label_get_text(obj), expected) == 0) return obj;
+    for (uint32_t i = 0; i < lv_obj_get_child_count(obj); ++i) {
+        lv_obj_t *found = visible_label(lv_obj_get_child(obj, i), expected);
+        if (found) return found;
+    }
+    return NULL;
+}
+
+static void check_cover_prompt(const penalty_model_t *m, bool retry) {
+    lv_obj_t *prompt = visible_label(lv_screen_active(), penalty_text(m->language,
+        retry ? PENALTY_TEXT_RETRY_PRESS_OK : PENALTY_TEXT_COVER_PROMPT));
+    assert(prompt);
+    assert(lv_color_eq(lv_obj_get_style_text_color(prompt, 0), lv_color_hex(0xA2BC9E)));
+    assert(lv_obj_get_style_bg_opa(prompt, 0) == LV_OPA_COVER);
+    assert(lv_obj_get_style_border_width(prompt, 0) == 0);
+    /* The cream mark must be larger and lower, but remain above the prompt. */
+    int left = 240, right = -1, top = 320, bottom = -1;
+    unsigned cream = 0;
+    for (int y = 232; y < 263; ++y) {
+        for (int x = 40; x < 200; ++x) {
+            uint16_t p = s_pixels[y * 240 + x];
+            if ((p >> 11) < 25 || ((p >> 5) & 63) < 45 || (p & 31) < 18) continue;
+            if (x < left) left = x;
+            if (x > right) right = x;
+            if (y < top) top = y;
+            if (y > bottom) bottom = y;
+            ++cream;
+        }
+    }
+    if (top < 239 || bottom >= 263)
+        fprintf(stderr, "Cover mark bounds: %d,%d-%d,%d cream=%u\n", left,top,right,bottom,cream);
+    assert(top >= 239 && bottom < 263);
+    assert(right - left + 1 >= 84 && bottom - top + 1 >= 19);
+    assert(abs(left + right - 239) <= 3 && cream >= 800 && cream <= 920);
+    /* Every pixel of the old artwork border must now match the footer green. */
+    for (int y = 263; y <= 295; ++y)
+        for (int x = 40; x <= 198; ++x)
+            if (y < 265 || y >= 294 || x < 42 || x >= 197)
+                assert(s_pixels[y * 240 + x] == rgb565(0x093A20));
+}
+
+static lv_obj_t *multiline_label(lv_obj_t *obj) {
+    if (lv_obj_has_flag(obj, LV_OBJ_FLAG_HIDDEN)) return NULL;
+    if (lv_obj_check_type(obj, &lv_label_class) && strchr(lv_label_get_text(obj), '\n'))
+        return obj;
+    for (uint32_t i = 0; i < lv_obj_get_child_count(obj); ++i) {
+        lv_obj_t *label = multiline_label(lv_obj_get_child(obj, i));
+        if (label) return label;
+    }
+    return NULL;
+}
+
+static void check_menu_layout(const penalty_model_t *m) {
+    lv_obj_t *label = multiline_label(lv_screen_active());
+    if (!label) return;
+    if (m->state != PENALTY_TITLE && m->state != PENALTY_SETTINGS &&
+        m->state != PENALTY_HELP) {
+        assert(lv_obj_get_style_text_line_space(label, 0) == 0);
+        return;
+    }
+    int rows = 1;
+    for (const char *p = lv_label_get_text(label); *p; ++p) rows += *p == '\n';
+    int pitch = m->state == PENALTY_SETTINGS ? 40 : 32;
+    int expected_rows = m->state == PENALTY_TITLE ? 5 :
+                        m->state == PENALTY_SETTINGS ? 4 : 3;
+    const lv_font_t *font = lv_obj_get_style_text_font(label, 0);
+    assert(rows == expected_rows);
+    assert(font->line_height + lv_obj_get_style_text_line_space(label, 0) == pitch);
+    assert(lv_obj_get_height(label) == (rows - 1) * pitch + font->line_height);
+    assert(lv_obj_get_y(label) == (m->state == PENALTY_TITLE ? 116 : 84));
+    assert(lv_obj_get_y(label) + lv_obj_get_height(label) <
+           (m->state == PENALTY_TITLE ? 270 :
+            m->state == PENALTY_SETTINGS ? 246 : 260));
+    assert(lv_color_eq(lv_obj_get_style_text_color(label, 0), lv_color_hex(0xF2F0D9)));
+    assert(lv_obj_get_style_bg_opa(label, 0) == LV_OPA_TRANSP);
+    assert(lv_obj_get_style_pad_top(label, 0) == 0);
+    if (m->state != PENALTY_HELP) {
+        const char *text = lv_label_get_text(label);
+        assert(strstr(text, ">> ") && strstr(text, " <<"));
+        assert(!strstr(strstr(text, ">> ") + 3, ">> "));
+        assert(!strchr(text, '[') && !strchr(text, ']'));
+    }
 }
 
 static bool has_visible_label_text(lv_obj_t *obj, const char *expected) {
@@ -115,7 +259,26 @@ static void render(penalty_model_t *m, uint64_t now, const char *dir, const char
     penalty_ui_update(m, now, 76, true, false);
     lv_obj_update_layout(lv_screen_active());
     check_labels(lv_screen_active());
+    check_menu_layout(m);
+    if (m->state == PENALTY_COVER || m->state == PENALTY_TITLE)
+        assert(!has_visible_label_text(lv_screen_active(),
+                    penalty_text(m->language, PENALTY_TEXT_HEADER_TITLE)));
+    if (m->state == PENALTY_TITLE)
+        assert(!has_visible_label_text(lv_screen_active(),
+                    penalty_text(m->language, PENALTY_TEXT_MENU_FOOTER)));
+    if (m->state == PENALTY_SETTINGS) {
+        assert(has_visible_label_text(lv_screen_active(),
+                    penalty_text(m->language, PENALTY_TEXT_HEADER_SETTINGS)));
+        assert(has_visible_label_text(lv_screen_active(),
+                    penalty_text(m->language, PENALTY_TEXT_SETTINGS_FOOTER)));
+    }
+    if (m->state == PENALTY_HELP) {
+        assert(!strstr(penalty_text(m->language, PENALTY_TEXT_HELP_BODY), "%"));
+        assert(has_visible_label_text(lv_screen_active(),
+                    penalty_text(m->language, PENALTY_TEXT_HELP_FOOTER)));
+    }
     lv_refr_now(s_display);
+    if (m->state == PENALTY_COVER) check_cover_prompt(m, false);
     if (m->state == PENALTY_FLIGHT && previous == PENALTY_FLIGHT) {
         assert(s_flushed_pixels < 240 * 165); /* No full pitch redraw for one moving frame. */
         if (s_flushed_pixels > s_max_motion_pixels) s_max_motion_pixels = s_flushed_pixels;
@@ -158,6 +321,39 @@ static void render(penalty_model_t *m, uint64_t now, const char *dir, const char
     fclose(f);
 }
 
+static void check_ai_round_headers(const char *dir, unsigned language) {
+    const penalty_state_t states[] = {PENALTY_HANDOFF, PENALTY_AIM, PENALTY_CHARGE,
+        PENALTY_FLIGHT, PENALTY_RESULT};
+    for (unsigned first = 0; first < 2; ++first) {
+        for (unsigned kick = 0; kick < 14; ++kick) {
+            penalty_model_t m;
+            penalty_model_init(&m, 42, 0);
+            m.session_kind = PENALTY_SESSION_SHOOTOUT;
+            m.language = language;
+            m.turn_role = (kick + first) % 2 ? PENALTY_ROLE_KEEPER : PENALTY_ROLE_SHOOTER;
+            m.current = (penalty_shot_t){.green_low = 50, .green_high = 60,
+                .perfect_low = 55, .timing_value = 55,
+                .outcome = PENALTY_GOAL};
+            m.match.player_goals = 5; m.match.ai_goals = 5;
+            m.match.sudden_death = kick >= 10;
+            unsigned expected_round = kick < 10 ? kick / 2 + 1 : (kick - 10) / 2 + 1;
+            m.match.sudden_death_round = kick >= 10 ? expected_round : 0;
+            for (unsigned state = 0; state < sizeof(states)/sizeof(states[0]); ++state) {
+                m.state = states[state];
+                m.match.total_settled = kick + (m.state == PENALTY_RESULT);
+                char expected[96], name[64];
+                snprintf(expected, sizeof(expected), penalty_text(language, m.match.sudden_death
+                    ? PENALTY_TEXT_MATCH_SD_HEADER_FMT : PENALTY_TEXT_MATCH_REG_HEADER_FMT),
+                    expected_round, 5u, 5u);
+                snprintf(name, sizeof(name), "ai-round-%u-kick-%u-state-%u", language, kick, state);
+                render(&m, 50, dir, !first && kick <= 2 &&
+                    (state == 0 || state == 4) ? name : NULL);
+                assert(has_visible_label_text(lv_screen_active(), expected));
+            }
+        }
+    }
+}
+
 int main(int argc, char **argv) {
     assert(argc == 2);
     assert(penalty_art_background.data_size == 240 * 240 * 2);
@@ -184,10 +380,11 @@ int main(int argc, char **argv) {
         render(&m, 0, argv[1], cycle == 0 ? "01-orientation" : NULL);
         /* A real full-bleed cover, not the old text-only turn-right prompt. */
         assert(s_pixels[160 * 240 + 120] != s_pixels[40 * 240 + 120]);
-        assert(has_visible_label_text(lv_screen_active(), "按 OK 开始"));
+        assert(has_visible_label_text(lv_screen_active(), "按 确认 开始"));
         for (int y = 0; y < 320; ++y) {
             for (int x = 0; x < 240; ++x) {
-                if (x >= 42 && x < 198 && y >= 265 && y < 295) continue;
+                if (x >= 40 && x <= 198 && y >= 263 && y <= 295) continue;
+                if (x >= 43 && x <= 197 && y >= 232 && y <= 261) continue;
                 uint16_t expected = bsp_display_pixel_outside_rounded_rect(x, y, 240, 320, 30)
                     ? 0 : penalty_cover_pixels[y * 240 + x];
                 assert(s_pixels[y * 240 + x] == expected);
@@ -203,26 +400,72 @@ int main(int argc, char **argv) {
         penalty_model_input(&m, PENALTY_INPUT_OK, 1);
         m.difficulty = cycle % 3;
         render(&m, 1, argv[1], cycle == 0 ? "02-title" : NULL);
-        assert(has_label_text(lv_screen_active(), "[射门挑战]\n守门挑战\n设置\n说明"));
+        assert(has_label_text(lv_screen_active(),
+                              ">> 点球决胜 <<\n点球练习\n守门练习\n设置\n说明"));
         if (cycle == 0) {
             m.language = PENALTY_LANGUAGE_EN;
             render(&m, 1, argv[1], "02-title-en");
             assert(has_label_text(lv_screen_active(),
-                                  "[SHOOTING CHALLENGE]\nKEEPER CHALLENGE\nSETTINGS\nHELP"));
+                                  ">> SHOOTOUT <<\nSHOOT PRACTICE\nKEEPER PRACTICE\nSETTINGS\nHELP"));
             m.language = PENALTY_LANGUAGE_ZH_CN;
             render(&m, 1, argv[1], NULL);
+
+            for (unsigned language = 0; language < PENALTY_LANGUAGE_COUNT; ++language) {
+                check_ai_round_headers(argv[1], language);
+                m.language = (penalty_language_t)language;
+                for (unsigned selection = 0; selection < 5; ++selection) {
+                    char name[48];
+                    m.selection = selection;
+                    snprintf(name, sizeof(name), "menu-%u-row-%u", language, selection);
+                    render(&m, 1, argv[1], name);
+                }
+            }
+            m.language = PENALTY_LANGUAGE_ZH_CN;
+            m.selection = 0;
+
+            penalty_model_t match = m;
+            match.session_kind = PENALTY_SESSION_SHOOTOUT;
+            match.state = PENALTY_COIN_READY;
+            render(&match, 10, argv[1], "50-coin-ready-zh");
+            match.state = PENALTY_COIN_SPIN; match.since_ms = 10;
+            for (unsigned frame = 0; frame < 8; ++frame) {
+                char capture[48];
+                snprintf(capture, sizeof(capture), "51-coin-spin-%u", frame);
+                render(&match, 10 + frame * 125, argv[1], capture);
+            }
+            match.state = PENALTY_COIN_RESULT;
+            match.match.coin_face = PENALTY_COIN_FOOTBALL;
+            render(&match, 1010, argv[1], "52-coin-football-zh");
+            match.match.coin_face = PENALTY_COIN_GLOVE;
+            render(&match, 1010, argv[1], "53-coin-glove-zh");
+            match.language = PENALTY_LANGUAGE_EN;
+            match.match.sudden_death = true;
+            match.match.sudden_death_round = 12;
+            match.match.player_goals = 16;
+            match.match.ai_goals = 16;
+            match.match.pair_player_done = true;
+            match.match.pair_player_scored = true;
+            match.turn_role = PENALTY_ROLE_KEEPER;
+            match.state = PENALTY_HANDOFF;
+            render(&match, 1100, argv[1], "54-handoff-sd12-en");
+            match.match.ai_goals = 15;
+            match.match.result = PENALTY_MATCH_PLAYER_WIN;
+            match.match.player_saves = 7;
+            match.state = PENALTY_MATCH_SUMMARY;
+            render(&match, 1200, argv[1], "55-match-summary-en");
         }
-        penalty_model_input(&m, PENALTY_INPUT_OK, 2);
-        render(&m, 2, argv[1], cycle == 0 ? "03-aim" : NULL);
+        penalty_model_input(&m, PENALTY_INPUT_DOWN, 2);
+        penalty_model_input(&m, PENALTY_INPUT_OK, 3);
+        render(&m, 3, argv[1], cycle == 0 ? "03-aim" : NULL);
         if (cycle == 0) {
             for (unsigned target = 0; target < PENALTY_TARGET_COUNT; ++target) {
                 char capture[48];
                 m.current.direction = (penalty_direction_t)target;
                 snprintf(capture, sizeof(capture), "31-aim-target-%u", target);
-                render(&m, 2, argv[1], capture);
+                render(&m, 3, argv[1], capture);
             }
             m.current.direction = PENALTY_TOP_CENTER;
-            render(&m, 2, argv[1], NULL);
+            render(&m, 3, argv[1], NULL);
         }
         /* New stadium artwork: pale goal frame at its calibrated top-left. */
         assert(s_pixels[40 * 240 + 46] == rgb565(0xfbfbed));
@@ -280,7 +523,11 @@ int main(int argc, char **argv) {
                         penalty_scene_t s = penalty_scene_at(&m, t + 601);
                         const lv_image_dsc_t *image = &penalty_art_keeper[s.keeper.frame];
                         int x = s.ball_x - s.keeper.x, y = s.ball_y - s.keeper.y;
-                        assert(image->data[56 * 56 * 2 + y * 56 + x] > 128);
+                        x -= penalty_art_keeper_offsets[s.keeper.frame].x;
+                        y -= penalty_art_keeper_offsets[s.keeper.frame].y;
+                        assert(x >= 0 && y >= 0 && x < image->header.w && y < image->header.h);
+                        assert(image->data[image->header.w * image->header.h * 2 +
+                                           y * image->header.w + x] > 128);
                     }
                 }
             }
@@ -332,21 +579,41 @@ int main(int argc, char **argv) {
             m.state = PENALTY_SETTINGS; m.selection = 2;
             render(&m, t, argv[1], "25-settings-zh");
             assert(has_label_text(lv_screen_active(), "设置"));
+            for (unsigned language = 0; language < PENALTY_LANGUAGE_COUNT; ++language) {
+                m.language = (penalty_language_t)language;
+                for (unsigned selection = 0; selection < 4; ++selection) {
+                    char name[48];
+                    m.selection = selection;
+                    snprintf(name, sizeof(name), "settings-%u-row-%u", language, selection);
+                    render(&m, t, argv[1], name);
+                }
+            }
+            m.language = PENALTY_LANGUAGE_ZH_CN;
             m.state = PENALTY_HELP;
             render(&m, t, argv[1], "26-help-zh");
             assert(has_label_text(lv_screen_active(), "玩法说明"));
+            m.language = PENALTY_LANGUAGE_EN;
+            render(&m, t, argv[1], "26-help-en");
+            m.language = PENALTY_LANGUAGE_ZH_CN;
             m.state = PENALTY_AIM; m.completed = 1;
             render(&m, t, argv[1], "27-aim-zh");
             m.state = PENALTY_SUMMARY; m.goals = 3; m.perfect = 1;
             render(&m, t, argv[1], "28-summary-zh");
             m.state = PENALTY_COVER;
             render(&m, t, argv[1], "29-cover-zh");
-            assert(has_visible_label_text(lv_screen_active(), "按 OK 开始"));
+            assert(has_visible_label_text(lv_screen_active(), "按 确认 开始"));
+
+            penalty_ui_update(&m, t, 76, true, true);
+            lv_obj_update_layout(lv_screen_active());
+            check_labels(lv_screen_active());
+            lv_refr_now(s_display);
+            check_cover_prompt(&m, true);
 
             m.language = PENALTY_LANGUAGE_EN;
             render(&m, t, argv[1], "30-cover-en");
             assert(has_visible_label_text(lv_screen_active(), "PRESS OK"));
-            m.mode = PENALTY_MODE_KEEPER;
+            m.session_kind = PENALTY_SESSION_KEEP_PRACTICE;
+            m.turn_role = PENALTY_ROLE_KEEPER;
             m.completed = m.saves = m.goals = m.perfect = 0;
             m.current = (penalty_shot_t){
                 .player_target = PENALTY_TOP_CENTER,
@@ -354,6 +621,7 @@ int main(int argc, char **argv) {
                 .green_low = 61, .green_high = 80, .perfect_low = 72,
             };
             m.state = PENALTY_AIM; m.since_ms = t;
+            render(&m, t + 1000, argv[1], "39-keeper-ready");
             for (unsigned target = 0; target < PENALTY_TARGET_COUNT; ++target) {
                 char capture[48];
                 m.current.opponent_target = (penalty_direction_t)target;
@@ -365,6 +633,10 @@ int main(int argc, char **argv) {
             m.state = PENALTY_CHARGE; m.since_ms = t;
             m.current.timing_value = m.current.perfect_low;
             render(&m, t + 200, argv[1], "41-keeper-timing");
+            m.current.outcome = PENALTY_KEEPER_CATCH;
+            m.state = PENALTY_FLIGHT; m.since_ms = t;
+            render(&m, t, argv[1], "41-keeper-contact");
+            render(&m, t + 100, argv[1], "41-keeper-follow");
             const char *keeper_names[] = {
                 "42-keeper-catch", "43-keeper-parry", "44-keeper-wrong-way",
                 "45-keeper-read-miss", "46-keeper-early", "47-keeper-late",
@@ -390,6 +662,8 @@ int main(int argc, char **argv) {
         if (cycle == 0) after_warmup = memory.free_size;
         else assert(memory.free_size == after_warmup);
     }
+    assert(s_blue_pose_mask == 0x1ff); /* Ready/contact/follow-through plus all six cues. */
+    printf("Penalty sprite normalization: PASS (9 blue poses, 83.2%% around ball; red native; ready height 65 +/- 1 px)\n");
     printf("Penalty LVGL: PASS (50 sessions/entry-exit cycles, 24 KB pool, free after exit=%zu, max moving-frame pixels=%zu)\n",
            after_warmup, s_max_motion_pixels);
     lv_display_delete(s_display);

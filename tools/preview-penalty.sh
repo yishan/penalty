@@ -15,4 +15,5 @@ cmake -S "${repo_root}/tests/penalty_preview" -B "${output_dir}/host-build" \
     -DLVGL_DIR="${lvgl_dir}" -DCMAKE_BUILD_TYPE=Debug
 cmake --build "${output_dir}/host-build" --parallel 6
 "${output_dir}/host-build/penalty_preview" "${output_dir}"
+"${output_dir}/host-build/penalty_mp_preview" "${output_dir}"
 echo "Actual LVGL screen captures (PPM): ${output_dir}"

@@ -17,7 +17,7 @@
 
 ### Penalty 简体中文字库子集
 
-- `fonts/penalty/penalty_font_zh_14.c` 与 `penalty_font_zh_20.c` 是游戏两种字号对应的 LVGL 4-bpp 生成字库，`penalty_fonts.h` 供渲染器引用。
+- `fonts/penalty/penalty_font_zh_14.c` 与 `penalty_font_zh_20.c` 是游戏两种字号对应的 LVGL 4-bpp 生成字库，`penalty_fonts.h` 供渲染器引用。使用不带预过滤的无损 RLE（`bitmap_format=2`），固件与主机配置均启用 `LV_USE_FONT_COMPRESSED`。字符范围、字形度量及透明度不变；解码只使用临时字形／行缓冲，不解码整套字体。
 - 子集包含 ASCII，以及 `main/penalty_i18n.c`、`main/penalty_copy.c` 当前使用的全部非 ASCII 字符。`tests/test_penalty_font_contract.py` 会拒绝缺字；新增中文文案后必须重新生成两种字号。
 - 来源：`managed_components/lvgl__lvgl/scripts/built_in_font/SourceHanSansSC-Normal.otf`（思源黑体简体中文，SIL Open Font License 1.1）。可再分发的许可全文保存在 `fonts/penalty/LICENSE-SourceHanSansSC.txt`。
 - 使用 `python3 tools/generate-penalty-fonts.py` 重建；脚本固定使用 `lv_font_conv` 1.5.3，并将转换器下载缓存放在仓库外。普通固件构建直接使用已跟踪的 C 文件，不依赖 Node.js，也不要求构建时存在源 OTF。
@@ -46,6 +46,8 @@
 
 ## Penalty 社区封面
 
+`images/penalty/releases/v2.0.0/` 中的发布界面截图是实际封面及中文创建／加入菜单的原生 240 x 320 桌面渲染，不是实机截图。像素与通过验证的 LVGL 渲染输出一致，未以示意图替代。
+
 [已提交的 v0.3 社区封面](images/penalty/community-cover-v0.3.png)和[未上传的 v0.4 无底部标识封面](images/penalty/community-cover-v0.4-no-label.png)均作为历史证据保留。当前的 [v1.1 社区封面候选](images/penalty/community-cover-v1.1-horizontal.png)同步采用横向草坪明暗带、黑色门将球衣及“点球决胜”字样。它仍是示意素材，不是实机截图，也尚未上传；项目 402 和修订 735 均未改变。
 
 ## Penalty 游戏画面提案
@@ -59,7 +61,7 @@
 
 [gameplay-v2 清单](images/penalty/gameplay-v2/manifest.json)记录纯背景、红衣射手五帧、蓝衣 AI 射手九帧、黑衣门将七帧、足球六种尺寸，以及内置 imagegen 素材说明和已校准动画锚点。蓝衣射手包含准备／触球／随摆及六个真实方向提示，门将包含准备及六格扑救。确定性风格处理保持横向草坪明暗带和黑／深灰门将球衣。`background-240x240.png` 是竖屏游戏居中的原生裁图，保留的 320 × 240 文件为确定性来源。这些是生成的游戏精灵，不是实机截图。
 
-当前竖屏渲染同时接入“射门”和“守门”。先运行 `python3 tools/prepare-penalty-action-art.py` 复现新增动作单元，再依次执行 `tools/style-penalty-art.py` 和 `tools/convert-penalty-gameplay.py`；转换器生成 `gameplay_assets.c/.h`，共 509,556 字节像素存于只读 Flash。240 × 240 背景为原生 RGB565，角色为分平面的 RGB565A8；三个脚本均支持 `--check`。Alpha 0–1 归零，254–255 归为 255，其余边缘透明度保留。Pillow 仅为离线转换依赖；没有新增 PNG 解码、运行时缩放、整屏 RAM 缓冲或每帧图片对象。提示与接触点行为见[守门模式设计](../penalty/docs/plans/2026-09-23-goalkeeper-mode-design.zh_CN.md)。旧固件及社区提交副本保留。
+当前竖屏渲染同时接入“射门”和“守门”。先运行 `python3 tools/prepare-penalty-action-art.py` 复现新增动作单元，再依次执行 `tools/style-penalty-art.py` 和 `tools/convert-penalty-gameplay.py`；转换器生成 `gameplay_assets.c/.h`，共 404,592 字节像素存于只读 Flash。240 × 240 背景为原生 RGB565，角色为分平面的 RGB565A8。五个红衣射手及七个门将帧仅去掉归一化后完全透明的外边缘，减少 104,964 字节像素；生成的偏移量保留原逻辑画布位置。蓝衣保留 88 × 88 画布，以保持现有 LVGL 缩放／枢轴的取样；足球保留半径／阴影计算使用的尺寸。三个脚本均支持 `--check`。Alpha 0–1 归零，254–255 归为 255，其余边缘透明度保留。Pillow 仅为离线转换依赖；没有新增 PNG 解码、整屏 RAM 缓冲或每帧图片对象，原有蓝衣有界缩放保持。提示与接触点行为见[守门模式设计](../penalty/docs/plans/2026-09-23-goalkeeper-mode-design.zh_CN.md)。旧固件及社区提交副本保留。
 
 ## 音乐与音效（music）
 

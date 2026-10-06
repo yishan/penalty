@@ -27,6 +27,11 @@ static void test_cue_vocabulary(void) {
     assert(cue.audible_when_muted);
     assert(cue.priority == PENALTY_SFX_PRIORITY_ACTION);
     assert(!penalty_audio_cue(PENALTY_SFX_NONE, &cue));
+    assert(penalty_audio_cue(PENALTY_SFX_COIN_SPIN, &cue));
+    assert(cue.segment_count <= PENALTY_SFX_MAX_SEGMENTS);
+    assert(cue.stale_ms <= PENALTY_COIN_SPIN_MS);
+    assert(penalty_audio_cue(PENALTY_SFX_COIN_LAND, &cue));
+    assert(cue.segment_count <= PENALTY_SFX_MAX_SEGMENTS);
 }
 
 static void test_kick_is_aligned_to_contact(void) {
@@ -124,10 +129,29 @@ static void test_ui_and_full_time_events(void) {
 
     before = model(PENALTY_RESULT, 100);
     after = model(PENALTY_SUMMARY, 1000);
-    after.mode = PENALTY_MODE_KEEPER;
+    after.session_kind = PENALTY_SESSION_KEEP_PRACTICE;
+    after.turn_role = PENALTY_ROLE_KEEPER;
     after.saves = 5;
     assert(penalty_audio_events(&tracker, &before, &after, 1000, events, 3) == 1);
     assert(events[0] == PENALTY_SFX_FLAWLESS);
+
+    before = model(PENALTY_COIN_READY, 100);
+    after = model(PENALTY_COIN_SPIN, 200);
+    assert(penalty_audio_events(&tracker, &before, &after, 200, events, 3) == 1);
+    assert(events[0] == PENALTY_SFX_COIN_SPIN);
+    before = after;
+    after = model(PENALTY_COIN_RESULT, 1200);
+    assert(penalty_audio_events(&tracker, &before, &after, 1200, events, 3) == 1);
+    assert(events[0] == PENALTY_SFX_COIN_LAND);
+
+    before = model(PENALTY_FLIGHT, 1300);
+    after = model(PENALTY_RESULT, 1900);
+    before.session_kind = after.session_kind = PENALTY_SESSION_SHOOTOUT;
+    before.match.total_settled = 7;
+    after.match.total_settled = 8;
+    after.current.outcome = PENALTY_GOAL;
+    assert(penalty_audio_events(&tracker, &before, &after, 1900, events, 3) == 1);
+    assert(events[0] == PENALTY_SFX_GOAL);
 }
 
 int main(void) {

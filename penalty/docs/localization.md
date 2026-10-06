@@ -25,8 +25,10 @@ English keeps the existing Montserrat fonts. Chinese uses generated 14 px and
 20 px subsets of the repository-pinned Source Han Sans SC font under SIL OFL
 1.1. The subsets contain only the glyphs used by the game. Host rendering must
 verify that every localized code point exists and that every visible line fits
-its LVGL label width. The current generated subset covers 191 localized glyphs
-across both roles.
+its LVGL label width. The current generated subset covers 247 localized glyphs
+across single-player and multiplayer. Both sizes use lossless RLE without
+prefiltering, with `LV_USE_FONT_COMPRESSED` enabled in firmware and host builds.
+The inventory, metrics and 4-bpp glyph opacity are unchanged by compression.
 
 The portrait cover has fixed English and Chinese game marks.
 They are part of the artwork and do not change with the selected UI language.

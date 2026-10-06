@@ -1,0 +1,1029 @@
+{
+  "playId": "penalty",
+  "version": "2.0.0",
+  "sourceCommit": "18265d7f41a176d0a519de171340ce8c92b31f9d",
+  "baseCommit": "ccd3576e304f7e17d9a0d4c12a2d05db379b14c0",
+  "launcherContract": "1",
+  "files": [
+    {
+      "path": ".gitignore",
+      "change": "M",
+      "sha256": "2bd9bf4442eab0c4357b405eaea6600cb9909de0c1f83209cb2526d0bb0671ef"
+    },
+    {
+      "path": "CMakeLists.txt",
+      "change": "M",
+      "sha256": "a8045d1f80e3cee8990a166d1daaa69b315564446a38681faf9caa8635f8ab1d"
+    },
+    {
+      "path": "assets/README.md",
+      "change": "M",
+      "sha256": "11ff0e6fdee4e544d85417338a68e25a3d99a5740e72d7205d08f6f353f7ed6d"
+    },
+    {
+      "path": "assets/README.zh_CN.md",
+      "change": "M",
+      "sha256": "addde20c1291b8c0a6262cad7bd5bb8f85860758466e4b132e7abb0a3f2e5c08"
+    },
+    {
+      "path": "assets/fonts/penalty/LICENSE-SourceHanSansSC.txt",
+      "change": "A",
+      "sha256": "f55c2d43dd905011515f5e46ba78d180027e314ef8ccaaf53a9e88fe316767cd"
+    },
+    {
+      "path": "assets/fonts/penalty/penalty_font_zh_14.c",
+      "change": "A",
+      "sha256": "75a116d5054e64f5cebaf379a846b63381761d59377099cfc2dbce7f60f212ed"
+    },
+    {
+      "path": "assets/fonts/penalty/penalty_font_zh_20.c",
+      "change": "A",
+      "sha256": "f764038a7c139c6a8a114829ea43ea12e6454bebe5b3a42aee3254d460023b18"
+    },
+    {
+      "path": "assets/fonts/penalty/penalty_fonts.h",
+      "change": "A",
+      "sha256": "8216b83417b1c7f66d5b478d648c2535c4cff102f84edb3e2b58a76f5fbb0011"
+    },
+    {
+      "path": "assets/images/penalty/community-cover-v0.3.png",
+      "change": "A",
+      "sha256": "7506f5eda38de240002b24cfa1acea3ef8903db2bbdcc42028e8f319c2be5063"
+    },
+    {
+      "path": "assets/images/penalty/community-cover-v0.4-no-label.png",
+      "change": "A",
+      "sha256": "ebaa3a054b495e394e6dd5f9d0d49de552d6fb892d3f12431f849c0383ed92bf"
+    },
+    {
+      "path": "assets/images/penalty/community-cover-v1.1-horizontal.png",
+      "change": "A",
+      "sha256": "637688d35780ad3be6ed82fcae8d937c43e5874a30376d64430cdd92f5b78f45"
+    },
+    {
+      "path": "assets/images/penalty/community-cover-v1.2-horizontal-cn-wide.png",
+      "change": "A",
+      "sha256": "aa935e2aa5f327e98f19997224f7c7a2014bfa2bc1d3d9b847e62a11c183d8fd"
+    },
+    {
+      "path": "assets/images/penalty/cover-240x320.png",
+      "change": "A",
+      "sha256": "4887409be41e19c288a307244e7b320b54b9345983f28510f9ef62cf780904c9"
+    },
+    {
+      "path": "assets/images/penalty/cover-concept.png",
+      "change": "A",
+      "sha256": "5da7e30dc82463f8c9eb518a534fcda58d8e39d9563989ae8b2b9079eff08c9b"
+    },
+    {
+      "path": "assets/images/penalty/cover-source-v1.0.png",
+      "change": "A",
+      "sha256": "5bea6b8ef4a24c6e5bd952e7041a601652096cc844517daca8bbe1ce7a17285a"
+    },
+    {
+      "path": "assets/images/penalty/cover-source.png",
+      "change": "A",
+      "sha256": "b20c467e5375f697fff23fd6354ce0e55aca31ad40039d6c0258ff626b547ef0"
+    },
+    {
+      "path": "assets/images/penalty/cover-tagline-128x16.png",
+      "change": "A",
+      "sha256": "ce58a8fb811d563e2ea44116a3bd9343e250a13afbc421270083ba1fbb8fc0ab"
+    },
+    {
+      "path": "assets/images/penalty/cover-tagline-128x20.png",
+      "change": "A",
+      "sha256": "0cec6d98056e892161240f9c86ad38b644d1fe025932c4a2cf0a7808ae708690"
+    },
+    {
+      "path": "assets/images/penalty/cover_rgb565.c",
+      "change": "A",
+      "sha256": "63eb0db1b2366817af3608f1e507e94b03a112329ec14a8c9aa6dd6cfe59104c"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-concept-v1-320x240.png",
+      "change": "A",
+      "sha256": "1c3f0f89e377994b23d46534e1afd272f4383d6190647318fac1bd0140d6d161"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-concept-v1-source.png",
+      "change": "A",
+      "sha256": "41d20d692bc2b3c92d99b31f9eacd93f3ae58acfe3c020eb304a793307c73f36"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-concept-v1.json",
+      "change": "A",
+      "sha256": "381e18994f8a62ecdf2bae56f7a1ba9f37aa6145f6b84034aba0e6acae97cafd"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/background-240x240.png",
+      "change": "A",
+      "sha256": "db00df47de0e3189f7cf2c0c91fd97133d165e47f30f9420c995c39ba648bb3d"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/background-320x240.png",
+      "change": "A",
+      "sha256": "94226a6b2b5666367367eccb7ae08e0272db16073ddfc70c2d5b21518596da6f"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/background-source-v1.0.png",
+      "change": "A",
+      "sha256": "31d409180734aaed989358ef181448d82e42e3eeb52376a863d05b40548c5379"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/background-source.png",
+      "change": "A",
+      "sha256": "d60edc8420b9c88f74e7eceacbdd4c34ef7830911c7277ff3a3a49607ae8c9c5"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/ball-10.png",
+      "change": "A",
+      "sha256": "0b43b4725ff2ef1b03935a64b33a34e314cf5e5b93a95ca1c4f9f52348ef828f"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/ball-12.png",
+      "change": "A",
+      "sha256": "cfca864b3cee30989415443a98e81d2f154272c5e74517e344971c6cdec00c0a"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/ball-14.png",
+      "change": "A",
+      "sha256": "37de8a2809eec39cc5af8c8b8931c1cbc5f372d4a6c9faddce2d45a0c4973330"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/ball-16.png",
+      "change": "A",
+      "sha256": "b7ed5e6c6bb16117c5ea748b3401e1691f08a1dfc7d337ec5d2ea50013ec8dff"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/ball-18.png",
+      "change": "A",
+      "sha256": "e9e464cab6c264b1d5bff89a4308999f9280200f786545ff9059113d5bf5a0e3"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/ball-8.png",
+      "change": "A",
+      "sha256": "e3f5815667b303f5dcc12517a4a1a10e398e36df24c122f892f5ba7ec7275905"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/ball-source.png",
+      "change": "A",
+      "sha256": "11a5d90864df558fee12503c808e94ae4867b23ae98ea7d3424d2ce88e757ffd"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/blue-striker-0-88x88.png",
+      "change": "A",
+      "sha256": "7a6dba02f3b46fe5e26e5c1833b5926800d94b8fb7649eac4b70545b88220543"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/blue-striker-1-88x88.png",
+      "change": "A",
+      "sha256": "d1bd1c6630122204976fdaac3de94c1ab45327a6e9708e95cbcc40d11a4a51d7"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/blue-striker-2-88x88.png",
+      "change": "A",
+      "sha256": "fd4c6a24802f21cc9c937431bad742fb8c86d277b82ca22f237cfde96979ce18"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/blue-striker-3-88x88.png",
+      "change": "A",
+      "sha256": "c83cd34ce4f513ca9250f3e9508ecaef416e0756278b4d40a1115047ad06f3ec"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/blue-striker-4-88x88.png",
+      "change": "A",
+      "sha256": "cb6d304bd9e63ee5564727dd857e37227f08b03cc286aee29acbd65098db8b9d"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/blue-striker-5-88x88.png",
+      "change": "A",
+      "sha256": "a5cc77284be083e5880913d6a801a13bd4039c877daf11cca879c2ac7b70358e"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/blue-striker-6-88x88.png",
+      "change": "A",
+      "sha256": "219960a0e189f75f5a214ce3ad56d031703b5a0a2ec528693444f99c89d15d60"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/blue-striker-7-88x88.png",
+      "change": "A",
+      "sha256": "be5dd41287bec23fddd2a6a4ca1b506b4ad9814252e99506ef74bb67112be614"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/blue-striker-8-88x88.png",
+      "change": "A",
+      "sha256": "0b11f29fef497caaec29802652836ae749845e5960c73d81b7021b6609a684ca"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/gameplay_assets.c",
+      "change": "A",
+      "sha256": "9f4b9e545d5d5d0f9e2377dbc771fad4538373a717086e44ee59f5c69a27921b"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/gameplay_assets.h",
+      "change": "A",
+      "sha256": "efba4c33e475cdb86f1f30856cc9743a0f60920689cae121d8a899671f5305a9"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/keeper-0-56x56.png",
+      "change": "A",
+      "sha256": "cb10a3af8d2428943635827eaa80c6e16fccb5648a995b4b782ae5f8eec48bbd"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/keeper-1-56x56.png",
+      "change": "A",
+      "sha256": "7fff589db5da386fd9088ed89f3857f29f34210043fb6f5461b00460d938d34a"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/keeper-2-56x56.png",
+      "change": "A",
+      "sha256": "b4370fae174b51e4375b72d61852b8db24ceb4947035732e353837f98a9b72d1"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/keeper-3-56x56.png",
+      "change": "A",
+      "sha256": "bbdcc45f8a34ab0549ee87f27ca126cca0ce272249d49a26d13c1e76769cb2e8"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/keeper-4-56x56.png",
+      "change": "A",
+      "sha256": "2b65e057fb8d15413eaf640f7bd858416146fafd330ac4d375a7b99924ff3a63"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/keeper-5-56x56.png",
+      "change": "A",
+      "sha256": "d78d4f32961e1581600fa0445987afd18f2c0a892f415ac5e2940dcb5335c087"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/keeper-6-56x56.png",
+      "change": "A",
+      "sha256": "bc5b902c6bd6b4ea911dde10d9b121289efeaf7eef84bd96d277734408d06f6f"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/keeper-extra-3-source.png",
+      "change": "A",
+      "sha256": "237b16d00b0847d648484e17e880aea727fc2211a48d5ccb2156945bc9abc7ac"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/keeper-sheet-source-v1.0.png",
+      "change": "A",
+      "sha256": "14183e05298ca56162c302806c619dfa347bdafbc93b56d237bbddd6c3014a3d"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/keeper-sheet-source.png",
+      "change": "A",
+      "sha256": "30c0b8b93d273e0b067d0f90c6b5613c44e3579ca60097bab03ad6b5da1ada3c"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/keeper-source-0-v1.0.png",
+      "change": "A",
+      "sha256": "f48358002c21fd8c9c47a70a77b4fb29f9faec791bc37d518128cb35ee89ea30"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/keeper-source-0.png",
+      "change": "A",
+      "sha256": "8462cb50067a5ece447e6b196cff81654e9a71aeb692a13c04409ed4ce6ec875"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/keeper-source-1-v1.0.png",
+      "change": "A",
+      "sha256": "b3b7deb4dc4c075c6bbc2db2167cc719abc8c23d0c245997468a573604038d39"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/keeper-source-1.png",
+      "change": "A",
+      "sha256": "0d74c923ba50e512e20ef02a3daa2210a0c6423a9994ce80957d0f4484081b35"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/keeper-source-2-v1.0.png",
+      "change": "A",
+      "sha256": "d5bc789a338499dabef9ea3f2d9a8f5f2338acd50e38f37de13bb8899add05b4"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/keeper-source-2.png",
+      "change": "A",
+      "sha256": "520a0e317a926ac3645083c8ea5aa94301916350b5f135d9eb3b3b99a011a347"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/keeper-source-3-v1.0.png",
+      "change": "A",
+      "sha256": "1ccd85ce79aa2edcbb75eeed3cb3b27f4989ec09defab9efa39104028fcc3e9f"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/keeper-source-3.png",
+      "change": "A",
+      "sha256": "b4f421fe95db52a7ff37d0f0ad296aae823286dffa2e7f8c2d61b5e927ad98e0"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/manifest.json",
+      "change": "A",
+      "sha256": "154676f490b3d563b3cf54abc968d5e9f3f62e073aec7be8d1fdd14b556cbe8e"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/striker-0-88x88.png",
+      "change": "A",
+      "sha256": "cfdfdd23dcbfde7114c9500d1db5c832ffa45ef35024d917685e7bbcc3e82393"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/striker-1-88x88.png",
+      "change": "A",
+      "sha256": "b322c40c4473cc293ba63629aa747da2383e8437895ad4e997825976bb972793"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/striker-2-88x88.png",
+      "change": "A",
+      "sha256": "a7d077082725521c76f200be65caa97434f2cad73d280a6ce778abe116446c51"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/striker-3-88x88.png",
+      "change": "A",
+      "sha256": "970640f8c45cffca797e49c0daff121d21a9836769efdc28b6969ca7c88d49c0"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/striker-4-88x88.png",
+      "change": "A",
+      "sha256": "e8512625e59954fc027ad5e696a274f43ba6d1851613a99008a2ff40e9dbb363"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/striker-blue-9-source.png",
+      "change": "A",
+      "sha256": "6ee87387495e9d3ef5c12ea6a6dae35d7e74fcf93ba8dd73113f0dd7793bbef5"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/striker-red-5-source.png",
+      "change": "A",
+      "sha256": "684abc4358253e715c2c27a7a3d436848a7eb8f2ce0231807741c859c2196666"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/striker-sheet-source.png",
+      "change": "A",
+      "sha256": "fcb478d9e1289252c54265f9b23ffafd02c47f16e4a6e182bb1a187c10a67445"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/striker-source-0.png",
+      "change": "A",
+      "sha256": "60296c528a67cdc4a64b7661c7359b822d16cde48e0f801aadeaf466b8a3ca37"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/striker-source-1.png",
+      "change": "A",
+      "sha256": "ba9dc0b3bf29a55e6bc7c4bc3f9228488c298b983bb512c93c3a8996d0ddd8dd"
+    },
+    {
+      "path": "assets/images/penalty/gameplay-v2/striker-source-2.png",
+      "change": "A",
+      "sha256": "11d262794025324d2b5594bb5b6ddcbfd71a9af0c06b3b3cbad4dbe3a9d04a3f"
+    },
+    {
+      "path": "assets/images/penalty/releases/v2.0.0/cover-zh.png",
+      "change": "A",
+      "sha256": "3133f9f5f8d5a34655c741452ff5fd3e2d9599c456c914679f3a3aec43f8df10"
+    },
+    {
+      "path": "assets/images/penalty/releases/v2.0.0/shootout-create-zh.png",
+      "change": "A",
+      "sha256": "c17a12ff9f08f0236ae7ddb78bb0c320c04d1d47a3b0ebd2e33fc6139879f029"
+    },
+    {
+      "path": "assets/images/penalty/releases/v2.0.0/shootout-join-zh.png",
+      "change": "A",
+      "sha256": "5a6d3c341aecb581deb45448f08634a74c0891a0050698d80a25bcc05fabf27a"
+    },
+    {
+      "path": "assets/music/penalty/penalty_sfx_pcm.c",
+      "change": "A",
+      "sha256": "59bf058c76c10fbafb1f120a66d4cd49bb9208df7a7e422f701d062f590a07c9"
+    },
+    {
+      "path": "assets/music/penalty/penalty_sfx_pcm.h",
+      "change": "A",
+      "sha256": "1b89b727a822ef783bece9f1469ba60d03afa661cf6298156c83a9e6bd9a4247"
+    },
+    {
+      "path": "components/bsp/include/bsp_audio.h",
+      "change": "M",
+      "sha256": "a806a2c7d77d1b818d37520f386e61c4bbb3d9f39d85b1b5cb18e8da7cb87c3c"
+    },
+    {
+      "path": "components/bsp/include/bsp_display.h",
+      "change": "M",
+      "sha256": "a31d27264079f82972d7effb53c366d64aa3194c1d310ef6d5300eae45431f45"
+    },
+    {
+      "path": "components/bsp/src/bsp_audio.c",
+      "change": "M",
+      "sha256": "8ba2d1cd906f583d6f5bf273e721ef227333112981eb4e287f7eaf105a615272"
+    },
+    {
+      "path": "components/bsp/src/bsp_display_lvgl.c",
+      "change": "M",
+      "sha256": "f51a1f8b4c655744bdfd8dbe7cb58e919ced253a07d7b584ee55f3e8e604b250"
+    },
+    {
+      "path": "components/launcher_contract/CMakeLists.txt",
+      "change": "A",
+      "sha256": "2b3ece69dab8a297a10bd1cdb6b0655bc10863e1f12ee9da1af3848e5753beac"
+    },
+    {
+      "path": "components/launcher_contract/include/launcher_contract.h",
+      "change": "A",
+      "sha256": "9ce447f32d70b5687a6d1ee77a931ec8e687c9ca71eaa5c0f887062901f26918"
+    },
+    {
+      "path": "components/launcher_contract/launcher_contract.c",
+      "change": "A",
+      "sha256": "3a09545f80404acefab5c6489d4fc5475d4dae74b09b3646971385cd5ab66a5e"
+    },
+    {
+      "path": "docs/README.md",
+      "change": "M",
+      "sha256": "cac11154fe8e98bcfebb458c1ac5b7abe1129b9f63376ef40f2992ed0f385611"
+    },
+    {
+      "path": "docs/README.zh_CN.md",
+      "change": "M",
+      "sha256": "8c8b47af962c9b322457cada069464d446e034345f3e1afdb6f4eff422725ce5"
+    },
+    {
+      "path": "docs/development/engineering/build-and-test.md",
+      "change": "M",
+      "sha256": "15c9fd00e30e2858ef7a10c0c6a1711826e95669626e2cdbafc2cc30c511bd7c"
+    },
+    {
+      "path": "docs/development/engineering/build-and-test.zh_CN.md",
+      "change": "M",
+      "sha256": "d3439bd76d3f9deb453741ba7b0264dcde9cc6863164196c4ef63386d247333d"
+    },
+    {
+      "path": "docs/hardware-design/AI_HARDWARE_DEVELOPMENT_GUIDE.md",
+      "change": "M",
+      "sha256": "c5e685caff42b45a9439a6a25c5fc1d5d680ef6d3cc0ac082841ec4d9813922c"
+    },
+    {
+      "path": "docs/hardware-design/AI_HARDWARE_DEVELOPMENT_GUIDE.zh_CN.md",
+      "change": "M",
+      "sha256": "f0199410e3f1ce8b06b4f313d7cf944ed7c1230e184721a0540c2cb8232d5f4c"
+    },
+    {
+      "path": "main/CMakeLists.txt",
+      "change": "M",
+      "sha256": "e71e7d35f27e48dd5877388fa475980de9bec19a4cd4cbedd4847a456880936f"
+    },
+    {
+      "path": "main/Kconfig.projbuild",
+      "change": "A",
+      "sha256": "3cb496cdcfe4a27d7d6ef2f7a4b746758831d64c87a4d90685031d83b154f21b"
+    },
+    {
+      "path": "main/demo.h",
+      "change": "M",
+      "sha256": "8863ad564e68b37fb7d9a73e9cb35d9c09e9235a6b4678c95ac58be03471b9d6"
+    },
+    {
+      "path": "main/demo_audio.c",
+      "change": "M",
+      "sha256": "4b9d8f3e9a0771f7f9823bb03644c0e43e32db1229add8385192695427cedf08"
+    },
+    {
+      "path": "main/demo_navigation.c",
+      "change": "M",
+      "sha256": "ee4c1e11f9e6b642a844dad85dd11966b4a0c2441e76ca5ec094517255cf3c48"
+    },
+    {
+      "path": "main/demo_navigation.h",
+      "change": "M",
+      "sha256": "416f3627f4b93a0f604938f73948ac79591b4fa5904456de4967a5d08f99397c"
+    },
+    {
+      "path": "main/main.c",
+      "change": "M",
+      "sha256": "b30544abbb72512329360134ce802282145be35bba30476e26f2ce3eb1cdbc81"
+    },
+    {
+      "path": "main/penalty_app.c",
+      "change": "A",
+      "sha256": "7f6747dc3156bce8e82953dd0af6291f5d3a7367ccc863a3cf563f400ac8b210"
+    },
+    {
+      "path": "main/penalty_app.h",
+      "change": "A",
+      "sha256": "fdc7c3817e3b8d1b2f46cceb69ca44d37fb2b8e0a5e8c1b61041db6465e9a8e6"
+    },
+    {
+      "path": "main/penalty_audio.c",
+      "change": "A",
+      "sha256": "7f494fd284a828586f1a2415d3f28e7ed93b10721ff31a5f915ced85044fcbb0"
+    },
+    {
+      "path": "main/penalty_audio.h",
+      "change": "A",
+      "sha256": "6f66803dd2a067b99389875353ca6d570d6f88bba470ac0880c62cce7814924d"
+    },
+    {
+      "path": "main/penalty_ble_diag.c",
+      "change": "A",
+      "sha256": "46071fa9b0334f6c8b3ab507f07fbb0b760ff3d5bb980bd1bd9047e02181ad0c"
+    },
+    {
+      "path": "main/penalty_ble_diag.h",
+      "change": "A",
+      "sha256": "68907e1a9cc6859501d60c7ef415801e35f177a8129c39e791959e6b9f348a73"
+    },
+    {
+      "path": "main/penalty_ble_fault.c",
+      "change": "A",
+      "sha256": "c242d5a39f6cb46a3def416cd9c3fbd085f07d6cd10e3786cdde4961f4d70c84"
+    },
+    {
+      "path": "main/penalty_ble_fault.h",
+      "change": "A",
+      "sha256": "71263769bb38452f8790256d1ced236a88e623e021454c5732ac6ae0652dbd34"
+    },
+    {
+      "path": "main/penalty_ble_protocol.c",
+      "change": "A",
+      "sha256": "49537334c7bb87b3edf0b7ba92d048856ab6e416105891db0922c28ada8cf8e8"
+    },
+    {
+      "path": "main/penalty_ble_protocol.h",
+      "change": "A",
+      "sha256": "38a80414c026b8f1383c9026d4414650fed91803e95c257cada233771df7ae98"
+    },
+    {
+      "path": "main/penalty_ble_reliable.c",
+      "change": "A",
+      "sha256": "c7ce4b0a80e094b55c1d16c792d193afe978ce4b9a27bde83c76cdfc4ad19f00"
+    },
+    {
+      "path": "main/penalty_ble_reliable.h",
+      "change": "A",
+      "sha256": "0a0698fb046464979821653abc3932971cdc380cbab02e0604b9f8bbd87a066d"
+    },
+    {
+      "path": "main/penalty_ble_session.c",
+      "change": "A",
+      "sha256": "bee39c3e142aaa41305e12505e64f9cf68f88007ee26389428c971422cc71ac8"
+    },
+    {
+      "path": "main/penalty_ble_session.h",
+      "change": "A",
+      "sha256": "189dfd8983da4c0530c02f8af232ce30dac25c414a3ca88744205aa6ae1c005a"
+    },
+    {
+      "path": "main/penalty_ble_session_core.c",
+      "change": "A",
+      "sha256": "be87ac93959d9acfd11affd8b3380ee00b33e7c8ddbba2e916009882a0fadec6"
+    },
+    {
+      "path": "main/penalty_ble_session_core.h",
+      "change": "A",
+      "sha256": "c6042d74245a87b44d375d602ca49e2850a4350a5f67eb9facfde8c70997944e"
+    },
+    {
+      "path": "main/penalty_copy.c",
+      "change": "A",
+      "sha256": "4dcd54a2c58f3724384d60cc3333e1d4d9b13ce1985f17a59f0672bd25965723"
+    },
+    {
+      "path": "main/penalty_copy.h",
+      "change": "A",
+      "sha256": "1a1de10c150ae9f015ead53a5f818115ea14feba830968cce63f71077bf200f2"
+    },
+    {
+      "path": "main/penalty_duel_model.c",
+      "change": "A",
+      "sha256": "018d53061b663cc08ce909f529d88f503047deabd74e92407af6951a69c119e6"
+    },
+    {
+      "path": "main/penalty_duel_model.h",
+      "change": "A",
+      "sha256": "647904e5850a3f2aa5f6dddb8b7426ae67599b4afb65a44a84a455791d280202"
+    },
+    {
+      "path": "main/penalty_i18n.c",
+      "change": "A",
+      "sha256": "c07323646ebf3d19b352b29d6b06b6400e9233cc3743be1f4e34211add48cd52"
+    },
+    {
+      "path": "main/penalty_i18n.h",
+      "change": "A",
+      "sha256": "4db52dbd904d85f590a6ec25b51c9e92ad1d2cad2031a4a24583c1970b2b0ac8"
+    },
+    {
+      "path": "main/penalty_model.c",
+      "change": "A",
+      "sha256": "131cc8785772ed2881ac67b41bc8753b03f0f1f6ea6d6e0967cde9b1e19aa9bf"
+    },
+    {
+      "path": "main/penalty_model.h",
+      "change": "A",
+      "sha256": "eb7c8d1791e0f0167659bf2ff8b9e14b27071a7a518750fa4538e96e598ee798"
+    },
+    {
+      "path": "main/penalty_multiplayer.c",
+      "change": "A",
+      "sha256": "451d77a2e316a8d15835f2fe07a485b8c068aeb15bf43cb53f42bc6484dc54b7"
+    },
+    {
+      "path": "main/penalty_multiplayer.h",
+      "change": "A",
+      "sha256": "698b2118f78120cfcf7795ac1a51efdcc2ad2c3458e5eb6c11474952a1d2bb6d"
+    },
+    {
+      "path": "main/penalty_multiplayer_core.c",
+      "change": "A",
+      "sha256": "8dc299ffb58a3caf488a92b99eedc3ad6afaf62e68564210b78579bd7a4be8b2"
+    },
+    {
+      "path": "main/penalty_multiplayer_core.h",
+      "change": "A",
+      "sha256": "117db8ef09df4fc6a955fbe6c7ad578aed89db5ed71fb0d64c67ead0ee1dc366"
+    },
+    {
+      "path": "main/penalty_preferences.c",
+      "change": "A",
+      "sha256": "65fbce85af460c267f786711d0f197c21cd9aaef1f9139fa809d58814280348c"
+    },
+    {
+      "path": "main/penalty_preferences.h",
+      "change": "A",
+      "sha256": "87d89ca8fc83199de6155d2c740612c048e0631be2e28008b5c8e42744c51201"
+    },
+    {
+      "path": "main/penalty_scene.c",
+      "change": "A",
+      "sha256": "df55d5463a02ad4fe65bef3979fdd8da1a404d0834e6a6495e51a35dc570ea02"
+    },
+    {
+      "path": "main/penalty_scene.h",
+      "change": "A",
+      "sha256": "36b93d28690e30c0f351483d7567134a283b64e7a9ea0c470fc037862412fa56"
+    },
+    {
+      "path": "main/penalty_ui.c",
+      "change": "A",
+      "sha256": "d5e6fa5333b26a05267a90c99355171cf87dd3a0d95cc180a5854b73afcfba73"
+    },
+    {
+      "path": "main/penalty_ui.h",
+      "change": "A",
+      "sha256": "88c07bbf8b8116e01df6b63d063c5c6afd7654ee2fa4936c85b1ea2ff5ee75ef"
+    },
+    {
+      "path": "penalty/README.md",
+      "change": "A",
+      "sha256": "9bf2120d47d7c0a7483d07ae6c813302edc1d03b996683c0ef9a5ff64b588c3d"
+    },
+    {
+      "path": "penalty/README.zh_CN.md",
+      "change": "A",
+      "sha256": "ca6401586c9327297ed8d19492259a87d808157034ce9b01dc4934ab3b15c03c"
+    },
+    {
+      "path": "penalty/VERSION",
+      "change": "A",
+      "sha256": "c28fcca53637bc88e124af1725df13cb98c69dedefd62fb3cdbe1cdb6b760624"
+    },
+    {
+      "path": "penalty/docs/community-submission.md",
+      "change": "A",
+      "sha256": "8f225ae2e9855770d4e5f6ddbb1600335e77729a3fc25b3f5a9ed3591e1d0f9e"
+    },
+    {
+      "path": "penalty/docs/community-submission.zh_CN.md",
+      "change": "A",
+      "sha256": "8d95d529ac4784095d13138212cea17bee49f1515ea4bd500d769423dfe7a9e0"
+    },
+    {
+      "path": "penalty/docs/game-design.md",
+      "change": "A",
+      "sha256": "a2316a90a4e6d9cc75ddd51a8134dee3a165903736946b92cf5121946f537e25"
+    },
+    {
+      "path": "penalty/docs/game-design.zh_CN.md",
+      "change": "A",
+      "sha256": "db40f2432a85238483c567687c58421cf11e061ad9bf9f47ceae442f377d10f7"
+    },
+    {
+      "path": "penalty/docs/localization.md",
+      "change": "A",
+      "sha256": "83955f9b1b8ef42e7d9fab1fceadb55b9796dc30085760a387d3ff5b17d5e537"
+    },
+    {
+      "path": "penalty/docs/localization.zh_CN.md",
+      "change": "A",
+      "sha256": "f04c09791d3736e0210a209f01dfba316be326d7529437bc4ecaa55a197e4435"
+    },
+    {
+      "path": "penalty/docs/plans/2026-09-15-pixel-art-integration-design.md",
+      "change": "A",
+      "sha256": "166cfea89603781b40e9571eb940a0c7a8ca994679c7a9962ba8b90375e6b52f"
+    },
+    {
+      "path": "penalty/docs/plans/2026-09-15-pixel-art-integration-design.zh_CN.md",
+      "change": "A",
+      "sha256": "c43a49eb1106aa25dbe8fd0298e6be1686e39136647914be1db3370af32827b6"
+    },
+    {
+      "path": "penalty/docs/plans/2026-09-16-audio-feedback-design.md",
+      "change": "A",
+      "sha256": "5ffee8ff39ef9ae8fdef4eff8af0a3e6facf2ed74889f75c7a33996443bba1e0"
+    },
+    {
+      "path": "penalty/docs/plans/2026-09-16-audio-feedback-design.zh_CN.md",
+      "change": "A",
+      "sha256": "dce10e074edeec8764a3a4841258ed8b8a5295659c2cb85477c008757e5d5459"
+    },
+    {
+      "path": "penalty/docs/plans/2026-09-16-dynamic-copy-design.md",
+      "change": "A",
+      "sha256": "4e18f1c0e5da79a718ce85a07decc904481284525afb8299ae2ad84e3bd998e1"
+    },
+    {
+      "path": "penalty/docs/plans/2026-09-16-dynamic-copy-design.zh_CN.md",
+      "change": "A",
+      "sha256": "e9a1bd50d0f12f07fee321778795d35727e40b2ccce0895efca54ffa31136e68"
+    },
+    {
+      "path": "penalty/docs/plans/2026-09-22-portrait-gameplay-design.md",
+      "change": "A",
+      "sha256": "7c6c1b2281e82b3f2e4a818e580cb97e4b4481de96f8bcd0f34c1c16cb50bde4"
+    },
+    {
+      "path": "penalty/docs/plans/2026-09-22-portrait-gameplay-design.zh_CN.md",
+      "change": "A",
+      "sha256": "ac8125a7eeb638b85d27e6c983b4e9c1831f6afc8ec20a1e131e983f566ea8e9"
+    },
+    {
+      "path": "penalty/docs/plans/2026-09-23-goalkeeper-mode-design.md",
+      "change": "A",
+      "sha256": "b6f857e63b9e26edecd644d1e325be2bf080d70da7c2360250ca85db3e751a3a"
+    },
+    {
+      "path": "penalty/docs/plans/2026-09-23-goalkeeper-mode-design.zh_CN.md",
+      "change": "A",
+      "sha256": "ac892684f2261ff61115aede75e7ce9231a1f2023a5b77ed6b55e7ff4b98ee60"
+    },
+    {
+      "path": "penalty/docs/plans/2026-09-23-goalkeeper-mode-implementation-plan.md",
+      "change": "A",
+      "sha256": "1252ee66dcfbca487df3a70ac5f9592e4f9e2e5546f0bcf1b30bf315a8b7482d"
+    },
+    {
+      "path": "penalty/docs/plans/2026-09-23-goalkeeper-mode-implementation-plan.zh_CN.md",
+      "change": "A",
+      "sha256": "111a47c9ccb4c45855efd150fc53b9d1be7eee6f44b35998d0a83a3b58d38fc0"
+    },
+    {
+      "path": "penalty/docs/plans/2026-09-23-shootout-mode-design.md",
+      "change": "A",
+      "sha256": "ffb2b8f46dd7796ba23e34cf0d52de8b4ed909e3ad77206aede6912f6997d7d1"
+    },
+    {
+      "path": "penalty/docs/plans/2026-09-23-shootout-mode-design.zh_CN.md",
+      "change": "A",
+      "sha256": "c58507c1eed20f9e5f27a31662b15cf74e0578d81860137476266575fa592c32"
+    },
+    {
+      "path": "penalty/docs/plans/2026-09-23-shootout-mode-implementation-plan.md",
+      "change": "A",
+      "sha256": "f39711e50082177b32741e0610e09bccd47be74027d82a5ef50b7aa8b152be09"
+    },
+    {
+      "path": "penalty/docs/plans/2026-09-23-shootout-mode-implementation-plan.zh_CN.md",
+      "change": "A",
+      "sha256": "e920418ecc5fc35ef29d48fd80480b417656ad731dd2ddece120ef121bb20a9b"
+    },
+    {
+      "path": "penalty/docs/plans/2026-09-24-ble-duel-v2-design.md",
+      "change": "A",
+      "sha256": "74332990b3d52a08055d901d6ad03d5090474451682daa026ae9d587c95ec631"
+    },
+    {
+      "path": "penalty/docs/plans/2026-09-24-ble-duel-v2-design.zh_CN.md",
+      "change": "A",
+      "sha256": "c1a31fe9ecabcd00aa9d2fd55921dceb63d1826501c430ff72fdf51ad4e341fd"
+    },
+    {
+      "path": "penalty/docs/releases/v2.0.0.md",
+      "change": "A",
+      "sha256": "82624564eae86d137027bdc04721adc4be7d4286a23b6ecdfcaf5456e3ca48b0"
+    },
+    {
+      "path": "penalty/docs/releases/v2.0.0.zh_CN.md",
+      "change": "A",
+      "sha256": "3005dc1fb7c3e652d853b7adaf64b787302d9df83c5d67cff76aaae0f9cb45dc"
+    },
+    {
+      "path": "penalty/docs/validation.md",
+      "change": "A",
+      "sha256": "05feecd410a1f63df65903a90742ed60f92ff793ca5296d5208a2c058eed01df"
+    },
+    {
+      "path": "penalty/docs/validation.zh_CN.md",
+      "change": "A",
+      "sha256": "2b7bb2f42fa058bde3a28596f57107fc40e943a2b23a529b11b89d639145eb31"
+    },
+    {
+      "path": "penalty/publishing/community-cover-update.json",
+      "change": "A",
+      "sha256": "592f0e5475b09281d680bf90a04d9e01efad758992f47ca0270212db887bd455"
+    },
+    {
+      "path": "penalty/publishing/receipt.json",
+      "change": "A",
+      "sha256": "ab225cb4d622ad6cd14263809c34853d27aff1c431d2da07a034edb7e901d41c"
+    },
+    {
+      "path": "penalty/publishing/submission-v2.0.0.json",
+      "change": "A",
+      "sha256": "94b6aaa8bebfd558f3bbcd5503355e34432db2cc76573146b20dc194ffa6b6b9"
+    },
+    {
+      "path": "penalty/publishing/submission.json",
+      "change": "A",
+      "sha256": "b615ec1756854b98ddd697d68c5361f7c861d0b84dcef3249d76398599c9c7f5"
+    },
+    {
+      "path": "sdkconfig.defaults",
+      "change": "M",
+      "sha256": "ef2aba0167c587c21ee5751b223f807b448f99356b0b30956162c350b375cf4d"
+    },
+    {
+      "path": "sdkconfig.dev-ble-faults",
+      "change": "A",
+      "sha256": "dbba8a790700cb8771ff3ead74b41d5c844cfafeea2495dae7f938ad6a464ba9"
+    },
+    {
+      "path": "tests/penalty_preview/CMakeLists.txt",
+      "change": "A",
+      "sha256": "b82bafdd9490993fb51c2551d23f8a523c2448c7cb0d5e80c902d4f9b12f87ac"
+    },
+    {
+      "path": "tests/penalty_preview/lv_conf.h",
+      "change": "A",
+      "sha256": "48ad159f6b20fcf7ce1546c004169f4e99848f4029ad00705cf6a7bbcae74de2"
+    },
+    {
+      "path": "tests/penalty_preview/mp_preview.c",
+      "change": "A",
+      "sha256": "e740ffda44e479d4373a71a9a1940d871cd79778ff115364b92f7f180eac1e7d"
+    },
+    {
+      "path": "tests/penalty_preview/preview.c",
+      "change": "A",
+      "sha256": "1a00f7d089135224ddfb48bdbd823af8c12bf60ae296c9b9e48bf9286797776b"
+    },
+    {
+      "path": "tests/test_bsp_display_rounding.c",
+      "change": "M",
+      "sha256": "35517059904986473288938c903d89323cd40e271196bce40e3c2e604d425b62"
+    },
+    {
+      "path": "tests/test_demo_navigation.c",
+      "change": "M",
+      "sha256": "60f64b759d021819a08b4242d6151db527a6d51fdb5f3cfe100dd9b8b079228c"
+    },
+    {
+      "path": "tests/test_penalty_art_contract.py",
+      "change": "A",
+      "sha256": "92b98323727a539cf1c6247d886f37aa817ddf1028f36860801abe13dd051095"
+    },
+    {
+      "path": "tests/test_penalty_audio.c",
+      "change": "A",
+      "sha256": "66808129ef5fdb2fbb56ed3eb1ff1edabf25fefca1225c3fd69fa354e594a549"
+    },
+    {
+      "path": "tests/test_penalty_ble_fault.c",
+      "change": "A",
+      "sha256": "025d52e17d89f437aec06619c7409e61ff26af7827e9ea3082d93f1bbff22367"
+    },
+    {
+      "path": "tests/test_penalty_ble_fault_contract.py",
+      "change": "A",
+      "sha256": "9d972151e1fc7467727f3f5619986c8d70c7caa675f9c92ed7455edb34584869"
+    },
+    {
+      "path": "tests/test_penalty_ble_protocol.c",
+      "change": "A",
+      "sha256": "17ec0c2d6011a1dafc557d8d4d9cd7f8e89e4937cd9beffc24d952d4b20acd41"
+    },
+    {
+      "path": "tests/test_penalty_ble_reliable.c",
+      "change": "A",
+      "sha256": "d128f7ee6e163f90d92190fb4ac04be1e7df4c44aff7f8328463d7593030a967"
+    },
+    {
+      "path": "tests/test_penalty_ble_session_core.c",
+      "change": "A",
+      "sha256": "1837b69e7f0c95b79f02f5a1d4cecdc0e2f71b73779b37a659d0a08486d5c09e"
+    },
+    {
+      "path": "tests/test_penalty_copy.c",
+      "change": "A",
+      "sha256": "6066b215c173824ac8ce05d9f094009d5c86c3abe415c9ff790b733877551c9d"
+    },
+    {
+      "path": "tests/test_penalty_duel_model.c",
+      "change": "A",
+      "sha256": "54a51ad5b4cecf265adbd8775e59d86243c7e239609f05314f3782c6645e4f78"
+    },
+    {
+      "path": "tests/test_penalty_font_contract.py",
+      "change": "A",
+      "sha256": "3fb7589f243eea64428fee9dd7dc50fe92eb873b1ba7a92821f0b2baecd30a8f"
+    },
+    {
+      "path": "tests/test_penalty_i18n.c",
+      "change": "A",
+      "sha256": "8be2bd47e83ae3600804803ce087c904bcb1d42d53375a8d6252cf7b894b7d5b"
+    },
+    {
+      "path": "tests/test_penalty_m5_contract.py",
+      "change": "A",
+      "sha256": "b8b10e0995ea4c5c30fc99a21e5b0b8214d00ccd33e74f9b862e04124ec3d07f"
+    },
+    {
+      "path": "tests/test_penalty_m5_resources.c",
+      "change": "A",
+      "sha256": "e0a9208495274d7479069524add65d7a743835ce0ad6d4b0aa514525f8dbae7b"
+    },
+    {
+      "path": "tests/test_penalty_model.c",
+      "change": "A",
+      "sha256": "176fbd05ec8f807a13d77ead1a263990f3504c92bfb67c8ca98a6a2b5b4c17b9"
+    },
+    {
+      "path": "tests/test_penalty_multiplayer_core.c",
+      "change": "A",
+      "sha256": "55065a4777824cef33c26a142be64ea689c8d6fbddacb6689b18059b8091a1f3"
+    },
+    {
+      "path": "tests/test_penalty_multiplayer_recovery.c",
+      "change": "A",
+      "sha256": "8eee9284ef6a5899b76050e2b91886765eb92f569227769f82862522003d09eb"
+    },
+    {
+      "path": "tests/test_penalty_preferences.c",
+      "change": "A",
+      "sha256": "87c6c498df956748ebb9b7d62a6ccfd6ddc57e61ba979e848ae447455dab1a20"
+    },
+    {
+      "path": "tests/test_penalty_scene.c",
+      "change": "A",
+      "sha256": "8a63ca86e1adda3c97a5920868f72624116b9fe6f94ba6682c28972c23bdb9f5"
+    },
+    {
+      "path": "tests/test_penalty_shell_contract.py",
+      "change": "A",
+      "sha256": "b339b5bb26ad882d563133fb2258d169d842272572257e93f2fafe596a9e2b1f"
+    },
+    {
+      "path": "tools/archive_firmware.py",
+      "change": "A",
+      "sha256": "badbb39245dca2e66635d3d72893214a6c767ab420d6e5960a437a2ee2821963"
+    },
+    {
+      "path": "tools/convert-penalty-cover.py",
+      "change": "A",
+      "sha256": "7800ad21afa092eab23a298ef2dc445cc37558d91a335e1f51587c29556089d8"
+    },
+    {
+      "path": "tools/convert-penalty-gameplay.py",
+      "change": "A",
+      "sha256": "6aa4c7fbdec53a0f1b2c556ab384f00639a324c929d96aabf8badac96a74c0f5"
+    },
+    {
+      "path": "tools/generate-penalty-fonts.py",
+      "change": "A",
+      "sha256": "011e4cb480f0071129cce130f594abc55f5ab3c677be03b74475b6e3f1f4c1e9"
+    },
+    {
+      "path": "tools/generate-penalty-sfx.py",
+      "change": "A",
+      "sha256": "0331f9fb6b90d86da59316496123bcab58887c3ca970bbec5d495f18b69002a4"
+    },
+    {
+      "path": "tools/prepare-penalty-action-art.py",
+      "change": "A",
+      "sha256": "35bb13e737d4e21be4016b347cd2ca633fe903403ff24496d7514105325fddf3"
+    },
+    {
+      "path": "tools/preview-penalty.sh",
+      "change": "A",
+      "sha256": "4ef1ed299f9225b9bafcf719e5a7913a39ac2cd53234a3b41ddaf45b2b660890"
+    },
+    {
+      "path": "tools/style-penalty-art.py",
+      "change": "A",
+      "sha256": "de46ffe5f8feca2d6db55c19f1f82caa2c8bcfbdbe15327c5fa37d266f6647af"
+    },
+    {
+      "path": "tools/validate.sh",
+      "change": "M",
+      "sha256": "32a998afb414bf3ad3ba858b029afea1e9ffb6610c4df0b18af690b591f68226"
+    }
+  ]
+}

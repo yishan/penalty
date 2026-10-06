@@ -6,6 +6,8 @@
 
 static penalty_model_t view(penalty_difficulty_t difficulty, uint8_t completed) {
     penalty_model_t model = {0};
+    model.session_kind = PENALTY_SESSION_SHOOT_PRACTICE;
+    model.turn_role = PENALTY_ROLE_SHOOTER;
     model.difficulty = difficulty;
     model.completed = completed;
     model.current.green_low = 37 + completed * 5;
@@ -80,11 +82,17 @@ static void result_copy_matches_the_outcome(void) {
 
 static void goalkeeper_prompts_are_role_specific(void) {
     penalty_model_t model = view(PENALTY_EASY, 0);
-    model.mode = PENALTY_MODE_KEEPER;
+    model.session_kind = PENALTY_SESSION_KEEP_PRACTICE;
+    model.turn_role = PENALTY_ROLE_KEEPER;
     assert(strcmp(penalty_pre_shot_copy(&model), "READ THE KICKER.") == 0);
     model.difficulty = PENALTY_NORMAL;
     model.completed = PENALTY_SHOTS - 1;
     assert(strcmp(penalty_pre_shot_copy(&model), "LAST SAVE. STAY BIG.") == 0);
+
+    model.session_kind = PENALTY_SESSION_SHOOTOUT;
+    model.match.total_settled = 12;
+    model.completed = 0;
+    assert(strlen(penalty_pre_shot_copy(&model)) <= 28);
 }
 
 int main(void) {

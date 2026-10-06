@@ -33,6 +33,14 @@ The tracked `dependencies.lock` pins Managed Component resolution. After changin
 
 Firmware validation uses a fresh temporary build directory and an isolated `sdkconfig` generated from the tracked defaults. It does not consume or overwrite a developer's root `sdkconfig`. It preserves the verified canonical merged image at `build/FoloToy-AI-Passport-full.bin` and, for this project, creates the byte-identical delivery copy `build/FoloToy-AI-Passport-Penalty-v<MAJOR.MINOR.PATCH>-full.bin` from `penalty/VERSION`. The gate also validates the [configured firmware layout](firmware-layout.md): image offsets from `flash_args`, partition-table MD5, bounds and non-overlap, and an application that starts in and fits its configured app partition. User-defined partition layouts are allowed.
 
+The gate also retains matching ELF, MAP, merged/application/bootloader/partition-table images and `flash_args` under `build/firmware/<full-bin-sha256>/`. The application descriptor's embedded ELF SHA256 must match the retained ELF. The immutable bundle binds debugging files to the checked firmware, not to an arbitrary later rebuild. A repeated archive of identical firmware reuses the first verified MAP because temporary build paths can change the MAP without changing firmware. Verify a bundle before device handoff:
+
+```bash
+python3 tools/archive_firmware.py verify build/firmware/<full-bin-sha256>
+```
+
+The archive does not sanitize firmware contents. Keep binaries and debug bundles out of commits. For a device with a different partition layout, first confirm compatibility and write only the approved app range; do not replace its layout with the merged image by default.
+
 The baseline also has a hardware-independent logic test:
 
 ```bash
@@ -52,7 +60,28 @@ Use the unified validation entry point:
 
 CI calls the same script. Fix the shared script or environment if local and CI behavior differs; do not duplicate command sequences in workflows.
 
+For the Penalty M4 controlled-disconnect development variant, run
+`./tools/validate.sh --all --dev-ble-faults`. The gate adds the tracked
+`sdkconfig.dev-ble-faults` overlay and verifies `CONFIG_PENALTY_DEV_BLE_FAULTS=y`.
+Normal builds default to disabled and reject an enabled hook. Development
+delivery copies stay under `build/dev-ble-faults/`, with a
+`-dev-ble-faults-full.bin` suffix; they do not replace normal delivery copies.
+Both variants retain content-addressed debugging bundles in `build/firmware/`.
+Do not publish this development variant. Device flashing remains separately
+authorized and app-only for the two existing compatible factory layouts.
+When IDF's Python lacks host-only image-test dependencies, set `HOST_PYTHON` to
+an existing Python with those dependencies; IDF still uses its own interpreter.
+
 Hardware-affecting changes must also run the applicable on-device checklist in the hardware guide. Report compilation separately from physical-device validation.
+
+Penalty M5 firmware/full gates also run both actual LVGL 9.5.0 desktop
+renderers and `idf.py size` before archiving. The single-player renderer covers
+all three modes; the multiplayer renderer covers bilingual lobby/security,
+difficulty, coin, locked waiting, recovery and summaries. Both check 50
+entry/exit cycles in the 24 KiB pool. These generated captures are desktop
+evidence, not device screenshots or runtime-resource measurements. Static-only
+validation checks fixed-state budgets and lifecycle contracts but does not run
+the CMake renderers; run `tools/preview-penalty.sh` for a separate render check.
 
 Never upload the app-only `build/FoloToy-AI-Passport.bin` to the community. Use
 the project-and-version delivery copy for handoff; it is byte-identical to the

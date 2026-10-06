@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert approved PNG layers to direct Flash RGB565/RGB565A8 (Pillow offline only)."""
+"""Pack approved PNG layers as RGB565/RGB565A8, omitting transparent sprite borders."""
 import argparse
 from pathlib import Path
 from PIL import Image
@@ -8,11 +8,19 @@ ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / 'assets/images/penalty/gameplay-v2'
 
 
-def pixels(path, size, alpha):
+def pixels(path, size, alpha, trim=False):
     with Image.open(path) as image:
         if image.size != size:
             raise ValueError(f'{path.name}: expected {size}, got {image.size}')
         rgba = image.convert('RGBA')
+        # Retain every visible pixel and its canvas position; normalize only the
+        # same near-transparent alpha values as the original full-canvas export.
+        box = (0, 0, *size)
+        if trim:
+            box = rgba.getchannel('A').point(lambda a: 0 if a <= 1 else a).getbbox()
+            if box is None:
+                raise ValueError(f'{path.name}: empty sprite')
+            rgba = rgba.crop(box)
         rgb = bytearray()
         mask = bytearray()
         raw = rgba.tobytes()
@@ -21,9 +29,9 @@ def pixels(path, size, alpha):
             rgb.extend((value & 255, value >> 8))
             # Quantize only near-transparent/near-opaque noise, retain real edge alpha.
             mask.append(0 if a <= 1 else 255 if a >= 254 else a)
-        if alpha and (min(mask) != 0 or max(mask) != 255):
-            raise ValueError(f'{path.name}: missing transparent exterior or opaque interior')
-        return bytes(rgb + mask) if alpha else bytes(rgb)
+        if alpha and max(mask) != 255:
+            raise ValueError(f'{path.name}: missing opaque interior')
+        return (bytes(rgb + mask) if alpha else bytes(rgb)), rgba.size, box[:2]
 
 
 def generate():
@@ -37,8 +45,13 @@ def generate():
     total = 0
     for group, files, alpha in groups:
         descriptors = []
+        offsets = []
         for i, (file, w, h) in enumerate(files):
-            data = pixels(ASSETS / file, (w, h), alpha)
+            # Blue sprites retain their canvas because LVGL's 213/256 sampling
+            # depends on its bounds; ball dimensions also define shadow/radius.
+            data, (w, h), (x, y) = pixels(ASSETS / file, (w, h), alpha,
+                                         trim=group in ('striker', 'keeper'))
+            offsets.append(f'{{{x}, {y}}}')
             total += len(data)
             name = f'pixels_{group}_{i}'
             source.append(f'_Alignas(4) static const uint8_t {name}[{len(data)}] = {{')
@@ -54,6 +67,11 @@ def generate():
         header.append(f'extern const lv_image_dsc_t {symbol};')
         value = descriptors[0] if group == 'background' else '{\n    ' + ',\n    '.join(descriptors) + '\n}'
         source.append(f'const lv_image_dsc_t {symbol} = {value};')
+        if alpha:
+            offset_symbol = f'penalty_art_{group}_offsets[{len(files)}]'
+            header.append(f'extern const lv_point_t {offset_symbol};')
+            source.append(f'const lv_point_t {offset_symbol} = ' +
+                          '{' + ', '.join(offsets) + '};')
     return {'gameplay_assets.h': '\n'.join(header) + '\n',
             'gameplay_assets.c': '\n'.join(source) + '\n'}, total
 

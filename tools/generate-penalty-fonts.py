@@ -25,7 +25,7 @@ def main() -> None:
             [
                 "npx", "--yes", "--cache", str(Path(tempfile.gettempdir()) / "penalty-npm-cache"),
                 "lv_font_conv@1.5.3",
-                "--no-compress", "--no-prefilter", "--bpp", "4",
+                "--no-prefilter", "--bpp", "4",
                 "--size", str(size), "--font", str(FONT_SOURCE),
                 "-r", "0x20-0x7f", "--symbols", symbols,
                 "--format", "lvgl", "--force-fast-kern-format",

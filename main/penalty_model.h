@@ -4,13 +4,17 @@
 #include <stdint.h>
 
 #define PENALTY_SHOTS 5
+#define PENALTY_RECENT_KICKS 8
+#define PENALTY_COIN_SPIN_MS 1000
 #define PENALTY_TIMEOUT_MS 4000
 #define PENALTY_FLIGHT_MS 600
 #define PENALTY_RESULT_MS 900
 
 typedef enum {
-    PENALTY_COVER, PENALTY_TITLE, PENALTY_SETTINGS, PENALTY_AIM, PENALTY_CHARGE,
-    PENALTY_FLIGHT, PENALTY_RESULT, PENALTY_SUMMARY, PENALTY_HELP, PENALTY_EXITING
+    PENALTY_COVER, PENALTY_TITLE, PENALTY_SETTINGS,
+    PENALTY_COIN_READY, PENALTY_COIN_SPIN, PENALTY_COIN_RESULT, PENALTY_HANDOFF,
+    PENALTY_AIM, PENALTY_CHARGE, PENALTY_FLIGHT, PENALTY_RESULT,
+    PENALTY_SUMMARY, PENALTY_MATCH_SUMMARY, PENALTY_HELP, PENALTY_EXITING
 } penalty_state_t;
 /* Stable target IDs; navigation scans each column vertically, not enum order. */
 typedef enum {
@@ -29,8 +33,21 @@ typedef enum {
 
 #define PENALTY_DEFAULT_LANGUAGE PENALTY_LANGUAGE_ZH_CN
 typedef enum {
-    PENALTY_MODE_SHOOTER, PENALTY_MODE_KEEPER, PENALTY_MODE_COUNT
-} penalty_mode_t;
+    PENALTY_SESSION_SHOOTOUT,
+    PENALTY_SESSION_SHOOT_PRACTICE,
+    PENALTY_SESSION_KEEP_PRACTICE,
+    PENALTY_SESSION_COUNT
+} penalty_session_kind_t;
+typedef enum { PENALTY_ROLE_SHOOTER, PENALTY_ROLE_KEEPER } penalty_turn_role_t;
+typedef enum {
+    PENALTY_COIN_UNSET, PENALTY_COIN_FOOTBALL, PENALTY_COIN_GLOVE
+} penalty_coin_face_t;
+typedef enum {
+    PENALTY_MATCH_IN_PROGRESS,
+    PENALTY_MATCH_PLAYER_WIN,
+    PENALTY_MATCH_AI_WIN,
+    PENALTY_MATCH_ABANDONED
+} penalty_match_result_t;
 typedef enum {
     PENALTY_GOAL, PENALTY_PERFECT, PENALTY_SAVE, PENALTY_WEAK,
     PENALTY_HIGH, PENALTY_TIMEOUT, PENALTY_GREEN_GOAL, PENALTY_GREEN_SAVE,
@@ -54,6 +71,37 @@ typedef struct {
 } penalty_shot_t;
 
 typedef struct {
+    penalty_turn_role_t player_role;
+    penalty_outcome_t outcome;
+    bool scoring_side_scored;
+} penalty_recent_kick_t;
+
+typedef struct {
+    uint32_t player_attempts;
+    uint32_t ai_attempts;
+    uint32_t player_goals;
+    uint32_t ai_goals;
+    uint32_t player_saves;
+    uint32_t ai_saves;
+    uint32_t sudden_death_round;
+    uint32_t total_settled;
+    uint8_t player_regular_scored_bits;
+    uint8_t ai_regular_scored_bits;
+    uint8_t recent_head;
+    uint8_t recent_count;
+    bool sudden_death;
+    bool ended_early;
+    bool pair_player_done;
+    bool pair_player_scored;
+    bool pair_ai_done;
+    bool pair_ai_scored;
+    penalty_coin_face_t coin_face;
+    penalty_turn_role_t first_role;
+    penalty_match_result_t result;
+    penalty_recent_kick_t recent[PENALTY_RECENT_KICKS];
+} penalty_match_t;
+
+typedef struct {
     penalty_state_t state;
     uint64_t since_ms;
     uint64_t last_input_ms;
@@ -63,12 +111,17 @@ typedef struct {
     uint8_t saves;
     uint8_t perfect;
     uint8_t selection;
-    penalty_mode_t mode;
+    penalty_session_kind_t session_kind;
+    penalty_turn_role_t turn_role;
     penalty_difficulty_t difficulty;
     penalty_language_t language;
     bool muted;
+    bool multiplayer; /* Projection only: suppress single-player directional cues. */
+    bool multiplayer_accuracy_miss; /* Projection only: off-target ball path. */
+    bool multiplayer_blue_shooter; /* Projection only: current shooter is the room joiner. */
     penalty_shot_t current;
     penalty_shot_t shots[PENALTY_SHOTS];
+    penalty_match_t match;
 } penalty_model_t;
 
 void penalty_model_init(penalty_model_t *model, uint32_t seed, uint64_t now_ms);
@@ -85,6 +138,11 @@ penalty_outcome_t penalty_judge(const penalty_shot_t *shot);
 penalty_outcome_t penalty_judge_keeper(const penalty_shot_t *shot);
 uint16_t penalty_keeper_cue_ms(penalty_difficulty_t difficulty);
 bool penalty_keeper_cue_visible(const penalty_model_t *model, uint64_t now_ms);
+bool penalty_player_is_keeper(const penalty_model_t *model);
+uint8_t penalty_coin_frame_at(const penalty_model_t *model, uint64_t now_ms);
+uint32_t penalty_shootout_round(const penalty_model_t *model);
+/* Display only: one-based kick IDs 1/2, 3/4 map to paired rounds 1, 2. */
+uint32_t penalty_round_for_kick(uint32_t kick_id);
 uint8_t penalty_target_column(penalty_direction_t target);
 uint8_t penalty_target_row(penalty_direction_t target);
 const char *penalty_difficulty_text(penalty_difficulty_t difficulty);

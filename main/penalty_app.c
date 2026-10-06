@@ -19,6 +19,7 @@
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 #include <stdatomic.h>
+#include <stdio.h>
 
 static const char *TAG = "penalty";
 static penalty_model_t s_model;
@@ -36,6 +37,9 @@ static penalty_language_t s_initial_language = PENALTY_DEFAULT_LANGUAGE;
 static penalty_audio_tracker_t s_audio_tracker;
 static uint64_t s_last_action;
 static uint32_t s_max_update_us, s_max_input_age_ms;
+static bool s_shootout_menu;
+static uint8_t s_shootout_selection;
+static atomic_int s_multiplayer_request;
 
 typedef struct { penalty_sfx_event_t event; uint64_t at_ms; } sound_t;
 
@@ -175,6 +179,24 @@ static void update(uint64_t now, const penalty_model_t *before) {
     for (size_t i = 0; i < count; ++i) send_sound(events[i]);
     atomic_store(&s_muted, s_model.muted);
     penalty_ui_update(&s_model, now, atomic_load(&s_battery), atomic_load(&s_audio_ok), s_input_reset);
+    if (s_shootout_menu) {
+        penalty_language_t language = s_model.language;
+        const penalty_text_id_t rows[] = {PENALTY_TEXT_MP_SINGLE, PENALTY_TEXT_MP_CREATE,
+            PENALTY_TEXT_MP_JOIN, PENALTY_TEXT_SETTINGS_BACK};
+        char text[256] = {0};
+        size_t offset = 0;
+        for (unsigned i = 0; i < 4; ++i) {
+            int written = snprintf(text + offset, sizeof(text) - offset, "%s%s%s%s",
+                i == s_shootout_selection ? PENALTY_MENU_SELECTED_PREFIX : "", penalty_text(language, rows[i]),
+                i == s_shootout_selection ? PENALTY_MENU_SELECTED_SUFFIX : "", i == 3 ? "" : "\n");
+            if (written < 0 || (size_t)written >= sizeof(text) - offset) break;
+            offset += written;
+        }
+        penalty_ui_menu_panel(&s_model, now, atomic_load(&s_battery), atomic_load(&s_audio_ok),
+            penalty_text(language, PENALTY_TEXT_COIN_HEADER),
+            penalty_text(language, PENALTY_TEXT_MENU_SHOOTOUT), text,
+            penalty_text(language, PENALTY_TEXT_MENU_FOOTER));
+    }
 }
 
 static void tick(lv_timer_t *timer) {
@@ -210,6 +232,9 @@ void penalty_app_set_initial_language(penalty_language_t language) {
 }
 
 void penalty_app_enter(void) {
+    s_shootout_menu = false;
+    s_shootout_selection = 0;
+    atomic_store(&s_multiplayer_request, 0);
     penalty_model_init(&s_model, esp_random(), now_ms());
     penalty_model_set_language(&s_model, s_initial_language);
     s_last_action = now_ms();
@@ -247,6 +272,18 @@ void penalty_app_enter(void) {
 
 esp_err_t penalty_app_start(void) {
     if (!s_ready) return ESP_ERR_NO_MEM;
+    (void)penalty_app_audio_start(s_model.muted);
+    if (!bsp_lvgl_lock(500)) return ESP_ERR_TIMEOUT;
+    lv_timer_resume(s_timer);
+    bsp_lvgl_unlock();
+    return ESP_OK;
+}
+
+esp_err_t penalty_app_audio_start(bool muted) {
+    if (s_worker || s_sound_queue || s_stopped) return ESP_ERR_INVALID_STATE;
+    atomic_store(&s_stop, false);
+    atomic_store(&s_muted, muted);
+    atomic_store(&s_audio_ok, false);
     s_sound_queue = xQueueCreate(4, sizeof(sound_t));
     s_stopped = xSemaphoreCreateBinary();
     if (!s_sound_queue || !s_stopped ||
@@ -255,10 +292,8 @@ esp_err_t penalty_app_start(void) {
         if (s_stopped) vSemaphoreDelete(s_stopped);
         s_sound_queue = NULL; s_stopped = NULL; s_worker = NULL;
         ESP_LOGW(TAG, "No service worker; play remains available without sound/battery");
+        return ESP_ERR_NO_MEM;
     }
-    if (!bsp_lvgl_lock(500)) return ESP_ERR_TIMEOUT;
-    lv_timer_resume(s_timer);
-    bsp_lvgl_unlock();
     return ESP_OK;
 }
 
@@ -268,6 +303,16 @@ esp_err_t penalty_app_stop(void) {
     s_ready = false;
     if (s_timer) { lv_timer_delete(s_timer); s_timer = NULL; }
     bsp_lvgl_unlock();
+    esp_err_t service_error = penalty_app_audio_stop();
+    if (service_error != ESP_OK) return service_error;
+    if (!bsp_lvgl_lock(500)) return ESP_ERR_TIMEOUT;
+    esp_err_t err = bsp_lvgl_set_landscape(false);
+    if (err == ESP_OK) lv_obj_add_flag(lv_screen_active(), LV_OBJ_FLAG_HIDDEN);
+    bsp_lvgl_unlock();
+    return err;
+}
+
+esp_err_t penalty_app_audio_stop(void) {
     atomic_store(&s_stop, true);
     if (s_worker) {
         const sound_t wake = {0};
@@ -279,15 +324,13 @@ esp_err_t penalty_app_stop(void) {
         }
         s_worker = NULL;
     }
-    if (!bsp_lvgl_lock(500)) return ESP_ERR_TIMEOUT;
-    esp_err_t err = bsp_lvgl_set_landscape(false);
-    if (err == ESP_OK) lv_obj_add_flag(lv_screen_active(), LV_OBJ_FLAG_HIDDEN);
-    bsp_lvgl_unlock();
-    if (err != ESP_OK) return err;
     if (s_sound_queue) { vQueueDelete(s_sound_queue); s_sound_queue = NULL; }
     if (s_stopped) { vSemaphoreDelete(s_stopped); s_stopped = NULL; }
     return ESP_OK;
 }
+
+void penalty_app_sound(penalty_sfx_event_t event) { send_sound(event); }
+bool penalty_app_audio_available(void) { return atomic_load(&s_audio_ok); }
 
 void penalty_app_exit(void) {
     penalty_ui_destroy();
@@ -321,7 +364,26 @@ bool penalty_app_key(bsp_btn_t btn, bsp_btn_ev_t event, uint64_t at, bool lost) 
             penalty_model_t before = s_model;
             penalty_input_t input = btn == BSP_BTN_UP ? PENALTY_INPUT_UP :
                 btn == BSP_BTN_DOWN ? PENALTY_INPUT_DOWN : PENALTY_INPUT_OK;
-            penalty_model_input(&s_model, input, at);
+            if (s_shootout_menu) {
+                if (input == PENALTY_INPUT_UP || input == PENALTY_INPUT_DOWN)
+                    s_shootout_selection = (s_shootout_selection +
+                        (input == PENALTY_INPUT_UP ? 3 : 1)) % 4;
+                else if (input == PENALTY_INPUT_OK) {
+                    if (s_shootout_selection == 0) {
+                        s_shootout_menu = false;
+                        penalty_model_input(&s_model, input, at);
+                    } else if (s_shootout_selection == 3) {
+                        s_shootout_menu = false;
+                        /* Restore layout after a panel overlay on the same title state. */
+                        penalty_ui_destroy();
+                        s_ready = penalty_ui_create();
+                    } else atomic_store(&s_multiplayer_request, s_shootout_selection);
+                }
+            } else if (s_model.state == PENALTY_TITLE && s_model.selection == 0 &&
+                       input == PENALTY_INPUT_OK) {
+                s_shootout_menu = true;
+                s_shootout_selection = 0;
+            } else penalty_model_input(&s_model, input, at);
             if (before.language != s_model.language) {
                 s_initial_language = s_model.language;
                 atomic_store(&s_language_to_save, s_model.language);
@@ -334,4 +396,13 @@ bool penalty_app_key(bsp_btn_t btn, bsp_btn_ev_t event, uint64_t at, bool lost) 
     bool exit = s_model.state == PENALTY_EXITING;
     bsp_lvgl_unlock();
     return exit;
+}
+
+int penalty_app_take_multiplayer_request(penalty_model_t *context) {
+    int request = atomic_load(&s_multiplayer_request);
+    if (!request || !context || !bsp_lvgl_lock(100)) return 0;
+    *context = s_model;
+    atomic_store(&s_multiplayer_request, 0);
+    bsp_lvgl_unlock();
+    return request;
 }

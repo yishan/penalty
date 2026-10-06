@@ -3,6 +3,15 @@ idf_component_register(
          "demo_navigation.c"
          "../assets/images/penalty/cover_rgb565.c"
          "penalty_model.c"
+         "penalty_duel_model.c"
+         "penalty_ble_protocol.c"
+         "penalty_ble_session_core.c"
+         "penalty_ble_fault.c"
+        "penalty_ble_session.c"
+        "penalty_ble_reliable.c"
+         "penalty_ble_diag.c"
+         "penalty_multiplayer_core.c"
+         "penalty_multiplayer.c"
          "penalty_audio.c"
          "penalty_copy.c"
          "penalty_i18n.c"
@@ -15,5 +24,5 @@ idf_component_register(
          "../assets/music/penalty/penalty_sfx_pcm.c"
          "penalty_app.c"
     INCLUDE_DIRS "." "../assets/fonts/penalty"
-    REQUIRES bsp esp_hw_support esp_timer launcher_contract nvs_flash
+    REQUIRES bsp bt esp_hw_support esp_timer launcher_contract nvs_flash
 )

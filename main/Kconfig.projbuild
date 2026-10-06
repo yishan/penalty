@@ -1,0 +1,9 @@
+menu "Penalty development tests"
+    config PENALTY_DEV_BLE_FAULTS
+        bool "Enable controlled BLE disconnect tests (development only)"
+        default n
+        help
+            Adds a DOWN-long test panel during an active multiplayer round.
+            Disconnects a real GAP link and suppresses rediscovery for 10 or
+            35 seconds without clearing match state. Never enable for release.
+endmenu

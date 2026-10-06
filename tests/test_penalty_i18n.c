@@ -16,13 +16,30 @@ int main(void) {
     assert(strcmp(penalty_text(PENALTY_LANGUAGE_EN, PENALTY_TEXT_COVER_PROMPT),
                   "PRESS OK") == 0);
     assert(strcmp(penalty_text(PENALTY_LANGUAGE_ZH_CN, PENALTY_TEXT_COVER_PROMPT),
-                  "按 OK 开始") == 0);
+                  "按 确认 开始") == 0);
+    assert(strcmp(penalty_text(PENALTY_LANGUAGE_EN, PENALTY_TEXT_MENU_SHOOTOUT),
+                  "SHOOTOUT") == 0);
     assert(strcmp(penalty_text(PENALTY_LANGUAGE_EN, PENALTY_TEXT_MENU_SHOOT),
-                  "SHOOTING CHALLENGE") == 0);
+                  "SHOOT PRACTICE") == 0);
     assert(strcmp(penalty_text(PENALTY_LANGUAGE_EN, PENALTY_TEXT_MENU_KEEP),
-                  "KEEPER CHALLENGE") == 0);
+                  "KEEPER PRACTICE") == 0);
     assert(strcmp(penalty_text(PENALTY_LANGUAGE_ZH_CN, PENALTY_TEXT_MENU_KEEP),
-                  "守门挑战") == 0);
+                  "守门练习") == 0);
+    assert(strcmp(penalty_text(PENALTY_LANGUAGE_ZH_CN, PENALTY_TEXT_MENU_SHOOTOUT),
+                  "点球决胜") == 0);
+    assert(strstr(penalty_text(PENALTY_LANGUAGE_EN, PENALTY_TEXT_COIN_FOOTBALL),
+                  "SHOOT FIRST"));
+    assert(strstr(penalty_text(PENALTY_LANGUAGE_ZH_CN, PENALTY_TEXT_COIN_GLOVE),
+                  "先守门"));
+    assert(strstr(penalty_text(PENALTY_LANGUAGE_EN, PENALTY_TEXT_MATCH_REG_HEADER_FMT),
+                  "AI"));
+    assert(strstr(penalty_text(PENALTY_LANGUAGE_ZH_CN, PENALTY_TEXT_MATCH_STATS_FMT),
+                  "扑救"));
+    assert(strstr(penalty_text(PENALTY_LANGUAGE_ZH_CN, PENALTY_TEXT_MATCH_REG_HEADER_FMT), "回合"));
+    assert(strstr(penalty_text(PENALTY_LANGUAGE_ZH_CN, PENALTY_TEXT_MATCH_SD_HEADER_FMT), "回合"));
+    assert(strstr(penalty_text(PENALTY_LANGUAGE_ZH_CN, PENALTY_TEXT_MP_SCORE_FMT), "回合"));
+    assert(!strstr(penalty_text(PENALTY_LANGUAGE_ZH_CN, PENALTY_TEXT_MP_SCORE_FMT), "球"));
+    assert(penalty_text(PENALTY_LANGUAGE_EN, PENALTY_TEXT_MP_SCORE_FMT)[0] == 'R');
     assert(strstr(penalty_text(PENALTY_LANGUAGE_EN, PENALTY_TEXT_HELP_BODY), "UP/DOWN"));
     assert(!strstr(penalty_text(PENALTY_LANGUAGE_EN, PENALTY_TEXT_HELP_BODY), "LEFT/RIGHT"));
     assert(!strstr(penalty_text(PENALTY_LANGUAGE_ZH_CN, PENALTY_TEXT_COVER_PROMPT), "横"));
@@ -34,6 +51,11 @@ int main(void) {
     assert(strcmp(penalty_text(PENALTY_LANGUAGE_ZH_CN, PENALTY_TEXT_SUMMARY_SAVES_FMT),
                   "%u / 5 扑出") == 0);
     for (unsigned language = 0; language < PENALTY_LANGUAGE_COUNT; ++language) {
+        const char *help = penalty_text((penalty_language_t)language, PENALTY_TEXT_HELP_BODY);
+        assert(!strstr(help, "%"));
+        unsigned lines = 1;
+        for (const char *p = help; *p; ++p) lines += *p == '\n';
+        assert(lines == 3);
         for (unsigned id = 0; id < PENALTY_TEXT_COUNT; ++id) {
             const char *text = penalty_text((penalty_language_t)language,
                                             (penalty_text_id_t)id);
@@ -64,7 +86,8 @@ int main(void) {
     model.completed = PENALTY_SHOTS - 1;
     assert(strcmp(penalty_pre_shot_copy(&model), "最后一球，别紧张。") == 0);
 
-    model.mode = PENALTY_MODE_KEEPER;
+    model.session_kind = PENALTY_SESSION_KEEP_PRACTICE;
+    model.turn_role = PENALTY_ROLE_KEEPER;
     model.completed = 0;
     assert(strcmp(penalty_pre_shot_copy(&model), "观察射手动作。") == 0);
     assert(strcmp(penalty_outcome_text_localized(PENALTY_LANGUAGE_ZH_CN,

@@ -19,7 +19,7 @@ Store reusable font files and generated font sources in `fonts/`.
 
 ### Penalty Simplified Chinese subset
 
-- `fonts/penalty/penalty_font_zh_14.c` and `penalty_font_zh_20.c` are generated LVGL 4-bpp font sources for the two sizes used by the game; `penalty_fonts.h` exposes them to the renderer.
+- `fonts/penalty/penalty_font_zh_14.c` and `penalty_font_zh_20.c` are generated LVGL 4-bpp font sources for the two sizes used by the game; `penalty_fonts.h` exposes them to the renderer. They use lossless RLE without prefiltering (`bitmap_format=2`); firmware and host configurations enable `LV_USE_FONT_COMPRESSED`. Glyph inventory, metrics and opacity are unchanged; decoding uses a temporary glyph/row buffer, not the full font.
 - The subset contains ASCII plus every non-ASCII character currently used by `main/penalty_i18n.c` and `main/penalty_copy.c`. `tests/test_penalty_font_contract.py` rejects missing glyphs, so adding Chinese copy requires regenerating both sizes.
 - Source: `managed_components/lvgl__lvgl/scripts/built_in_font/SourceHanSansSC-Normal.otf` (Source Han Sans SC, SIL Open Font License 1.1). The redistributable license text is preserved at `fonts/penalty/LICENSE-SourceHanSansSC.txt`.
 - Rebuild with `python3 tools/generate-penalty-fonts.py`; the script pins `lv_font_conv` 1.5.3 and keeps converter downloads outside the repository cache. Normal firmware builds use the tracked C output and need neither Node.js nor the source OTF at build time.
@@ -48,6 +48,8 @@ Store reusable source images and generated display assets in `images/`.
 
 ## Penalty community cover
 
+Release UI captures under `images/penalty/releases/v2.0.0/` are native 240 x 320 desktop renders of the actual cover and Chinese Create/Join menus. They are not physical-device screenshots. Their pixels match the validated LVGL render outputs; no illustrative content was substituted.
+
 The [submitted v0.3 community cover](images/penalty/community-cover-v0.3.png) and [unuploaded v0.4 label-free cover](images/penalty/community-cover-v0.4-no-label.png) are preserved as historical evidence. The current [v1.1 community-cover candidate](images/penalty/community-cover-v1.1-horizontal.png) applies the same horizontal pitch bands, black keeper kit, and Chinese game mark as the firmware art. It remains an illustrative asset, not a device screenshot, and has not been uploaded; project 402 and revision 735 are unchanged.
 
 ## Penalty gameplay visual proposal
@@ -61,7 +63,7 @@ The [submitted v0.3 community cover](images/penalty/community-cover-v0.3.png) an
 
 The [gameplay-v2 manifest](images/penalty/gameplay-v2/manifest.json) records a clean background, five red-shooter frames, nine blue AI-shooter frames, seven black-keeper frames, and six ball sizes, together with built-in imagegen briefs and calibrated animation anchors. The blue sheet contains ready/contact/follow-through plus six truthful directional cues; the keeper set covers ready plus all six target cells. The deterministic style pass keeps horizontal pitch bands and the black/dark-charcoal keeper kit. `background-240x240.png` is the centered native portrait crop; the preserved 320 × 240 file remains its deterministic source. These are generated game sprites, not device screenshots.
 
-Integrated into the portrait renderer for both Shoot and Keep. Run `python3 tools/prepare-penalty-action-art.py` to reproduce the new action cells, then `tools/style-penalty-art.py` and `tools/convert-penalty-gameplay.py`; the converter creates `gameplay_assets.c/.h` with 509,556 pixel bytes in read-only Flash, using native RGB565 for the 240 × 240 background and planar RGB565A8 for sprites. Each script supports `--check`. Alpha 0–1 is normalized to 0 and 254–255 to 255; other edge alpha is retained. Pillow is an offline conversion dependency only. No PNG decoder, runtime resizing, full-screen RAM buffer, or image objects per frame are introduced. See the [goalkeeper-mode design](../penalty/docs/plans/2026-09-23-goalkeeper-mode-design.md) for cue and contact behavior. Previous firmware/submission copies are preserved.
+Integrated into the portrait renderer for both Shoot and Keep. Run `python3 tools/prepare-penalty-action-art.py` to reproduce the new action cells, then `tools/style-penalty-art.py` and `tools/convert-penalty-gameplay.py`; the converter creates `gameplay_assets.c/.h` with 404,592 pixel bytes in read-only Flash, using native RGB565 for the 240 × 240 background and planar RGB565A8 for sprites. It removes only the normalized fully transparent border of the five red-shooter and seven keeper frames, saving 104,964 pixel bytes; generated offsets retain the original logical canvas positions. Blue sprites keep their 88 × 88 canvas to preserve LVGL's existing scale/pivot sampling, and balls retain the dimensions used for radius/shadow calculations. Each script supports `--check`. Alpha 0–1 is normalized to 0 and 254–255 to 255; other edge alpha is retained. Pillow is an offline conversion dependency only. No PNG decoder, full-screen RAM buffer, or image objects per frame are introduced. Existing bounded blue-sprite scaling remains. See the [goalkeeper-mode design](../penalty/docs/plans/2026-09-23-goalkeeper-mode-design.md) for cue and contact behavior. Previous firmware/submission copies are preserved.
 
 ## Music and sound effects
 
